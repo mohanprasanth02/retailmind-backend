@@ -197,8 +197,8 @@ def generate_invoice_pdf(order: dict, output_path: str):
         table_data.append([
             Paragraph(p_name, body_style),
             Paragraph(str(p_qty), right_align_body),
-            Paragraph(f"${p_price:,.2f}", right_align_body),
-            Paragraph(f"${p_total:,.2f}", right_align_body)
+            Paragraph(f"Rs. {p_price:,.2f}", right_align_body),
+            Paragraph(f"Rs. {p_total:,.2f}", right_align_body)
         ])
         
     # Re-calculate subtotal/gst/total if values in order are 0
@@ -223,7 +223,7 @@ def generate_invoice_pdf(order: dict, output_path: str):
     
     # 6. Calculations & QR Code Section (Two-column: QR left, Totals right)
     # Generate QR Code
-    qr_data = f"RetailMindAI:INV-{short_order_id}|Total:${total:.2f}"
+    qr_data = f"RetailMindAI:INV-{short_order_id}|Total:INR{total:.2f}"
     qr = qrcode.QRCode(version=1, box_size=3, border=2)
     qr.add_data(qr_data)
     qr.make(fit=True)
@@ -236,7 +236,7 @@ def generate_invoice_pdf(order: dict, output_path: str):
     qr_flowable = Image(buffer, width=70, height=70)
     
     qr_desc = Paragraph(
-        "<font size='7' color='#64748b'>Scan QR to verify invoice authenticity & authorize payment gateway transfer.</font>", 
+        "<font size='7' color='#64748b'>Scan QR to verify invoice authenticity & authorize UPI payment gateway transfer.</font>", 
         body_style
     )
     
@@ -249,9 +249,9 @@ def generate_invoice_pdf(order: dict, output_path: str):
 
     # Totals column
     total_data = [
-        [Paragraph("Subtotal:", body_style), Paragraph(f"${subtotal:,.2f}", right_align_body)],
-        [Paragraph("GST (18%):", body_style), Paragraph(f"${gst:,.2f}", right_align_body)],
-        [Paragraph("<b>Grand Total:</b>", bold_body_style), Paragraph(f"<b>${total:,.2f}</b>", right_align_body)]
+        [Paragraph("Subtotal:", body_style), Paragraph(f"Rs. {subtotal:,.2f}", right_align_body)],
+        [Paragraph("GST (18%):", body_style), Paragraph(f"Rs. {gst:,.2f}", right_align_body)],
+        [Paragraph("<b>Grand Total:</b>", bold_body_style), Paragraph(f"<b>Rs. {total:,.2f}</b>", right_align_body)]
     ]
     totals_table = Table(total_data, colWidths=[140, 140])
     totals_table.setStyle(TableStyle([

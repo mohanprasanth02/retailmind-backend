@@ -1,33 +1,21 @@
 import React from "react";
 
 /**
- * BackgroundOrbs — animated floating gradient blobs that give the
- * app a premium "alive" feeling. Fixed behind all content, z-index 0.
+ * Ultra-clean ambient background for Light Enterprise Theme.
  */
 const BackgroundOrbs = () => (
   <div
     aria-hidden="true"
-    style={{
-      position: "fixed",
-      inset: 0,
-      pointerEvents: "none",
-      overflow: "hidden",
-      zIndex: 0,
-    }}
+    className="fixed inset-0 pointer-events-none z-0 overflow-hidden"
+    style={{ transform: "translateZ(0)" }}
   >
-    {/* Large blue orb — top-left, slow drift */}
-    <div className="bg-orb bg-orb-1" />
-    {/* Violet orb — top-right */}
-    <div className="bg-orb bg-orb-2" />
-    {/* Emerald orb — bottom-center */}
-    <div className="bg-orb bg-orb-3" />
-    {/* Amber micro-orb — mid-right */}
-    <div className="bg-orb bg-orb-4" />
-    {/* Rose micro-orb — bottom-left */}
-    <div className="bg-orb bg-orb-5" />
-
-    {/* Subtle dot-grid overlay */}
-    <div className="bg-dot-grid" />
+    <div
+      className="absolute inset-0"
+      style={{
+        background:
+          "radial-gradient(circle at 10% 0%, rgba(79, 70, 229, 0.025) 0%, transparent 60%), radial-gradient(circle at 90% 100%, rgba(16, 185, 129, 0.025) 0%, transparent 60%)",
+      }}
+    />
   </div>
 );
 

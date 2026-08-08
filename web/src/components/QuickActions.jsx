@@ -62,10 +62,11 @@ const QuickActions = () => {
                   transition={{ delay: 0.1 + i * 0.055 }}
                   style={{
                     position: "absolute", right: 54, top: "50%", transform: "translateY(-50%)",
-                    whiteSpace: "nowrap", background: "rgba(10,10,14,0.95)",
-                    border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8,
-                    padding: "4px 10px", fontSize: 11, fontWeight: 600,
-                    color: "var(--text-primary)", backdropFilter: "blur(12px)",
+                    whiteSpace: "nowrap", background: "rgba(255,255,255,0.95)",
+                    border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8,
+                    padding: "4px 10px", fontSize: 11, fontWeight: 700,
+                    color: "#1D1D1F", backdropFilter: "blur(12px)",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                     pointerEvents: "none",
                   }}
                 >

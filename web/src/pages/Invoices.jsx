@@ -1,19 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { FileText, Download, Search, RefreshCw, CheckCircle, Clock } from "lucide-react";
+import { FileText, Download, Search, RefreshCw, CheckCircle } from "lucide-react";
 import { formatPrice } from "../utils/currency";
 import { API_BASE_URL } from "../config";
-
-const IndianRupee = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M6 3h12" />
-    <path d="M6 8h12" />
-    <path d="M6 13h4.5a4.5 4.5 0 0 1 0 9" />
-    <path d="M10.5 13 18 22" />
-    <path d="M6 3c5 0 6.5 5 6.5 5" />
-  </svg>
-);
-
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -21,136 +10,182 @@ const Invoices = () => {
   const [search, setSearch]     = useState("");
 
   const fetchInvoices = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`);
       if (res.ok) {
         const data = await res.json();
         setInvoices(data.filter(o => o.status === "Completed" || o.status === "Processing" || o.subtotal > 0));
       }
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
+
   useEffect(() => { fetchInvoices(); }, []);
 
   const filtered = invoices.filter(inv =>
-    inv.customerName?.toLowerCase().includes(search.toLowerCase()) ||
-    inv.orderId?.toLowerCase().includes(search.toLowerCase())
+    (inv.customerName && inv.customerName.toLowerCase().includes(search.toLowerCase())) ||
+    (inv.orderId && inv.orderId.toLowerCase().includes(search.toLowerCase()))
   );
 
   const totalRevenue = invoices.filter(i => i.status === "Completed").reduce((s, i) => s + (i.total || 0), 0);
 
   return (
-    <div className="space-y-7 relative z-10">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="section-header">
+    <div className="space-y-6 relative z-10">
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]"
+      >
         <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "rgba(251,113,133,0.12)", border: "1px solid rgba(251,113,133,0.2)" }}>
-              <FileText size={17} style={{ color: "#fb7185" }} />
-            </span>
-            Invoice Records
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            Financial Documentation
+          </span>
+          <h1 className="apple-hero-title">
+            Official store statements.
           </h1>
-          <p className="section-subtitle">Review order statements, tax breakdowns and download PDF invoices</p>
+          <p className="apple-hero-subtitle">
+            Automated GST/tax calculations, downloadable PDF invoices, and verified order statements.
+          </p>
         </div>
-        <button onClick={fetchInvoices} className="btn btn-ghost">
-          <RefreshCw size={13} /> Reload
-        </button>
-      </div>
 
-      {/* ── Summary ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Total Invoices",  value: invoices.length, color: "#fb7185" },
-          { label: "Completed",       value: invoices.filter(i => i.status === "Completed").length, color: "#34d399" },
-          { label: "Revenue Invoiced",value: formatPrice(totalRevenue), color: "#60a5fa", isStr: true },
-        ].map(s => (
-          <div key={s.label} className="glass-card p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `${s.color}15`, border: `1px solid ${s.color}25` }}>
-              <IndianRupee size={16} style={{ color: s.color }} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-              <p className="text-xl font-bold" style={{ color: s.color }}>{s.isStr ? s.value : s.value}</p>
-            </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={fetchInvoices}
+          className="btn btn-ghost shadow-xs self-start md:self-auto cursor-pointer"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#007AFF" }} />
+          <span>Reload</span>
+        </motion.button>
+      </motion.div>
+
+      {/* ── Summary Stats ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Total Invoices</p>
+            <h3 className="text-xl font-bold text-[#1D1D1F] m-0">{invoices.length} Statements</h3>
           </div>
-        ))}
+          <div className="w-10 h-10 rounded-xl bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center">
+            <FileText size={18} strokeWidth={2} />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Completed Payments</p>
+            <h3 className="text-xl font-bold text-[#34C759] m-0">
+              {invoices.filter(i => i.status === "Completed").length} Invoices
+            </h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#EAF8ED] text-[#34C759] flex items-center justify-center">
+            <CheckCircle size={18} strokeWidth={2} />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Total Invoiced</p>
+            <h3 className="text-xl font-bold text-[#1D1D1F] m-0">{formatPrice(totalRevenue)}</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#F2F1FD] text-[#5856D6] flex items-center justify-center">
+            <FileText size={18} strokeWidth={2} />
+          </div>
+        </div>
       </div>
 
-      {/* ── Search ─────────────────────────────────────────── */}
+      {/* ── Search Bar ───────────────────────────────────────────── */}
       <div className="relative max-w-md">
-        <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-        <input type="text" placeholder="Search by customer or Order ID..." value={search}
-          onChange={(e) => setSearch(e.target.value)} className="input-field pl-10" />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B] z-10 pointer-events-none" />
+        <input
+          type="text"
+          placeholder="Search by customer name or Order ID..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input-field"
+          style={{ paddingLeft: "42px" }}
+        />
       </div>
 
-      {/* ── Table ─────────────────────────────────────────────── */}
+      {/* ── Invoice Table ────────────────────────────────────────── */}
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: "rgba(251,113,133,0.3)", borderTopColor: "#fb7185" }} />
+          <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin" />
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Invoice ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Items</th>
-                <th className="text-right">Amount</th>
-                <th>Status</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12">
-                  <FileText size={32} className="mx-auto mb-2 opacity-20" />
-                  <p style={{ color: "var(--text-muted)" }}>No invoices found</p>
-                </td></tr>
-              ) : filtered.map((inv, i) => {
-                const shortId = inv.orderId?.substring(6, 14).toUpperCase() || "UNKNOWN";
-                const ts = inv.timestamp;
-                const date = ts ? new Date((typeof ts === "number" ? ts : ts._seconds) * 1000).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—";
-                const isCompleted = inv.status === "Completed";
+        <div className="glass-card overflow-hidden bg-white rounded-2xl border border-black/[0.06] shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 140, padding: "14px 20px" }}>Order ID</th>
+                  <th style={{ minWidth: 220, padding: "14px 20px" }}>Customer</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Date</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Platform</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Amount (₹)</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Status</th>
+                  <th style={{ minWidth: 140, padding: "14px 20px", textAlign: "right" }}>PDF Invoice</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-[#86868B]">
+                      No invoice records found matching search
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((inv) => {
+                    const ts = inv.timestamp;
+                    const dateStr = ts
+                      ? new Date((typeof ts === "number" ? ts : ts._seconds) * 1000).toLocaleDateString()
+                      : "Today";
 
-                return (
-                  <motion.tr key={inv.orderId}
-                    initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.03 }}>
-                    <td>
-                      <span className="font-mono text-[12px] font-bold" style={{ color: "#fb7185" }}>
-                        #INV-{shortId}
-                      </span>
-                    </td>
-                    <td className="font-semibold">{inv.customerName}</td>
-                    <td className="text-[12px]">{date}</td>
-                    <td className="text-[12px]">{inv.products?.length || "—"} items</td>
-                    <td className="text-right font-bold" style={{ color: "var(--text-primary)" }}>
-                      {formatPrice(inv.total)}
-                    </td>
-                    <td>
-                      <span className="badge" style={isCompleted
-                        ? { background: "rgba(52,211,153,0.1)", color: "#34d399", border: "1px solid rgba(52,211,153,0.25)" }
-                        : { background: "rgba(96,165,250,0.1)", color: "#60a5fa", border: "1px solid rgba(96,165,250,0.25)" }
-                      }>
-                        {isCompleted ? <CheckCircle size={9} /> : <Clock size={9} />}
-                        {inv.status}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <button onClick={() => window.open(`${API_BASE_URL}/api/orders/${inv.orderId}/invoice`, "_blank")}
-                        className="btn btn-primary text-[11px] py-1.5 px-3">
-                        <Download size={11} /> PDF
-                      </button>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
+                    return (
+                      <tr key={inv.orderId}>
+                        <td style={{ padding: "14px 20px" }} className="font-mono text-xs font-bold text-[#007AFF]">
+                          #{inv.orderId?.slice(0, 10)}
+                        </td>
+                        <td style={{ padding: "14px 20px" }} className="font-bold text-[#1D1D1F]">
+                          {inv.customerName || "Customer"}
+                        </td>
+                        <td style={{ padding: "14px 20px" }} className="text-xs text-[#86868B]">{dateStr}</td>
+                        <td style={{ padding: "14px 20px" }}>
+                          <span className="badge gray capitalize">{inv.platform || "Web"}</span>
+                        </td>
+                        <td style={{ padding: "14px 20px" }} className="font-bold text-[#1D1D1F]">
+                          {formatPrice(inv.total)}
+                        </td>
+                        <td style={{ padding: "14px 20px" }}>
+                          {inv.status === "Completed" ? (
+                            <span className="badge green">Paid</span>
+                          ) : (
+                            <span className="badge orange">Processing</span>
+                          )}
+                        </td>
+                        <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                          <a
+                            href={`${API_BASE_URL}/api/invoices/${inv.orderId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E5F1FF] text-[#007AFF] hover:bg-[#D4E7FF] no-underline transition-all"
+                          >
+                            <Download size={13} strokeWidth={2} />
+                            Download
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

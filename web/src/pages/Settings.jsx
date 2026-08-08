@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Settings as SettingsIcon, ShieldCheck, Database, Cpu, Save, Server, Zap, Globe } from "lucide-react";
-import { fireSuccessBurst, AnimatedCheckmark } from "../components/MicroAnimations";
+import { motion } from "framer-motion";
+import { Settings as SettingsIcon, ShieldCheck, Database, Cpu, Save, Server, Zap, Globe, Check } from "lucide-react";
+import { fireSuccessBurst } from "../components/MicroAnimations";
 import { API_BASE_URL, getApiBaseUrl, setApiBaseUrl } from "../config";
 
 const Settings = () => {
@@ -51,11 +51,11 @@ const Settings = () => {
   const integrations = [
     {
       icon: Database,
-      label: "Database Source",
+      label: "Database Connection",
       desc: sysStatus.mock_db ? "In-Memory Polling" : "Cloud Firestore Live",
       active: !sysStatus.mock_db,
       badge: sysStatus.mock_db ? "Mock Mode" : "Live",
-      color: sysStatus.mock_db ? "#fbbf24" : "#34d399",
+      color: sysStatus.mock_db ? "#FF9500" : "#34C759",
     },
     {
       icon: Cpu,
@@ -63,171 +63,166 @@ const Settings = () => {
       desc: sysStatus.mock_ai ? "Heuristics Regex Engine" : "GPT-4o Mini",
       active: !sysStatus.mock_ai,
       badge: sysStatus.mock_ai ? "Mock Mode" : "GPT Active",
-      color: sysStatus.mock_ai ? "#fbbf24" : "#34d399",
+      color: sysStatus.mock_ai ? "#FF9500" : "#34C759",
     },
     {
       icon: Server,
-      label: "FastAPI Backend",
+      label: "Backend Server API",
       desc: storeConfig.backendUrl || getApiBaseUrl(),
       active: sysStatus.status === "online",
       badge: sysStatus.status === "online" ? "Online" : "Offline",
-      color: sysStatus.status === "online" ? "#34d399" : "#fb7185",
+      color: sysStatus.status === "online" ? "#34C759" : "#FF3B30",
     },
     {
       icon: Globe,
-      label: "Webhook Listeners",
+      label: "Webhook Integration",
       desc: "WhatsApp / Instagram / Email",
       active: true,
       badge: "Active",
-      color: "#60a5fa",
+      color: "#007AFF",
     },
   ];
 
-  const formFields = [
-    { key: "backendUrl",    label: "Backend Server URL (API)", type: "text", span: 2, placeholder: "https://retailmind-backend-698m.onrender.com" },
-    { key: "storeName",     label: "Store Name",        type: "text",   span: 2, placeholder: "RetailMind Smart Store" },
-    { key: "supportEmail",  label: "Support Email",     type: "email",  span: 1, placeholder: "support@retailmind.ai" },
-    { key: "supportPhone",  label: "Support Phone",     type: "text",   span: 1, placeholder: "+91-800-RETAIL" },
-    { key: "gstPercentage", label: "GST Tax Rate (%)",  type: "number", span: 1, placeholder: "18" },
-    { key: "currency",      label: "Currency",          type: "select", span: 1 },
-  ];
-
   return (
-    <div className="space-y-7 relative z-10">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="section-header">
+    <div className="space-y-6 relative z-10">
+      {/* ── Page Header Bar ───────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]"
+      >
         <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.2)" }}>
-              <SettingsIcon size={17} style={{ color: "#94a3b8" }} />
-            </span>
-            System Settings
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            System Configuration
+          </span>
+          <h1 className="apple-hero-title">
+            Configure your store environment.
           </h1>
-          <p className="section-subtitle">Configure store variables, integrations, and database connections</p>
+          <p className="apple-hero-subtitle">
+            Manage API connections, store information, tax rates, and live service integrations.
+          </p>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={handleSave}
+          className="btn btn-primary shadow-md shadow-blue-500/20 cursor-pointer self-start md:self-auto"
+        >
+          {saved ? <Check size={15} strokeWidth={2.5} /> : <Save size={15} strokeWidth={2} />}
+          <span>{saved ? "Settings Saved!" : "Save Configuration"}</span>
+        </motion.button>
+      </motion.div>
+
+      {/* ── System Health Cards ────────────────────────────────────── */}
+      <div>
+        <p className="apple-section-label mb-3">Live System Integrations</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {integrations.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <div key={i} className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${item.color}15`, border: `1px solid ${item.color}25` }}>
+                  <Icon size={18} style={{ color: item.color }} strokeWidth={2} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                    <h3 className="text-xs font-bold text-[#1D1D1F] truncate m-0">{item.label}</h3>
+                    <span className="badge text-[9px] font-bold" style={{ background: `${item.color}15`, color: item.color }}>
+                      {item.badge}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-[#86868B] truncate m-0">{item.desc}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* ── Integrations Panel ──────────────────────────── */}
-        <div className="space-y-4">
-          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }}
-            className="glass-card p-6 space-y-3">
-            <div className="flex items-center gap-2.5 mb-4 pb-4" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.2)" }}>
-                <ShieldCheck size={13} style={{ color: "#94a3b8" }} />
-              </div>
-              <h2 className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>
-                API & Cloud Integrations
-              </h2>
-            </div>
+      {/* ── Configuration Form Card ───────────────────────────────── */}
+      <div className="glass-card p-6 bg-white rounded-2xl border border-black/[0.06] shadow-xs">
+        <h2 className="text-base font-bold text-[#1D1D1F] pb-3 border-b border-black/[0.06] m-0 mb-4">
+          Store Details & API Endpoints
+        </h2>
 
-            {integrations.map((item, i) => {
-              const Icon = item.icon;
-              return (
-                <motion.div key={item.label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="flex items-center justify-between p-3 rounded-xl"
-                  style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)" }}>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${item.color}12`, border: `1px solid ${item.color}25` }}>
-                      <Icon size={13} style={{ color: item.color }} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-semibold truncate" style={{ color: "var(--text-primary)" }}>{item.label}</p>
-                      <p className="text-[10px] truncate" style={{ color: "var(--text-muted)" }}>{item.desc}</p>
-                    </div>
-                  </div>
-                  <span className="badge flex-shrink-0 ml-2"
-                    style={{ background: `${item.color}12`, color: item.color, border: `1px solid ${item.color}25` }}>
-                    {item.badge}
-                  </span>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-
-          {/* System Info */}
-          <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-            className="glass-card p-5 flex items-start gap-3"
-            style={{ border: "1px solid rgba(96,165,250,0.12)" }}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(96,165,250,0.1)", border: "1px solid rgba(96,165,250,0.2)" }}>
-              <Zap size={14} style={{ color: "#60a5fa" }} />
-            </div>
-            <div>
-              <p className="text-[11px] font-bold mb-1" style={{ color: "#60a5fa" }}>RetailMind v2.0</p>
-              <p className="text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
-                AI-powered retail ops platform. FastAPI backend + Firebase Firestore + Flutter mobile.
-              </p>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* ── Store Config Form ───────────────────────────── */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="glass-card p-6 lg:col-span-2">
-          <div className="flex items-center gap-2.5 mb-6 pb-4" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.2)" }}>
-              <SettingsIcon size={13} style={{ color: "#94a3b8" }} />
-            </div>
-            <h2 className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>Store Configuration</h2>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div>
+            <label className="apple-section-label block mb-1">Backend Server API URL</label>
+            <input
+              type="text" required
+              value={storeConfig.backendUrl}
+              onChange={(e) => setStoreConfig({ ...storeConfig, backendUrl: e.target.value })}
+              className="input-field font-mono text-xs"
+              placeholder="http://localhost:8000"
+            />
           </div>
 
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {formFields.map((f) => (
-                <div key={f.key} className={`space-y-1.5 ${f.span === 2 ? "col-span-2" : ""}`}>
-                  <label className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
-                    {f.label}
-                  </label>
-                  {f.type === "select" ? (
-                    <select value={storeConfig[f.key]}
-                      onChange={(e) => setStoreConfig({ ...storeConfig, [f.key]: e.target.value })}
-                      className="input-field">
-                      <option value="INR (₹)">INR (₹)</option>
-                      <option value="USD ($)">USD ($)</option>
-                      <option value="EUR (€)">EUR (€)</option>
-                      <option value="GBP (£)">GBP (£)</option>
-                    </select>
-                  ) : (
-                    <input type={f.type} value={storeConfig[f.key]} placeholder={f.placeholder}
-                      onChange={(e) => setStoreConfig({ ...storeConfig, [f.key]: e.target.value })}
-                      className="input-field" required />
-                  )}
-                </div>
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="apple-section-label block mb-1">Store Name</label>
+              <input
+                type="text" required
+                value={storeConfig.storeName}
+                onChange={(e) => setStoreConfig({ ...storeConfig, storeName: e.target.value })}
+                className="input-field"
+              />
             </div>
-
-            <div className="flex items-center justify-between pt-4" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-              <AnimatePresence mode="wait">
-                {saved ? (
-                  <motion.div key="saved"
-                    initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }}
-                    className="flex items-center gap-2"
-                  >
-                    <AnimatedCheckmark size={22} color="#34d399" />
-                    <p className="text-[11px] font-semibold" style={{ color: "#34d399" }}>
-                      Configuration saved!
-                    </p>
-                  </motion.div>
-                ) : (
-                  <motion.p key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                    className="text-[11px]" style={{ color: "var(--text-muted)" }}>
-                    Changes are stored locally in your browser.
-                  </motion.p>
-                )}
-              </AnimatePresence>
-              <button type="submit" className="btn btn-primary">
-                <Save size={13} /> Save Configuration
-              </button>
+            <div>
+              <label className="apple-section-label block mb-1">Support Email</label>
+              <input
+                type="email" required
+                value={storeConfig.supportEmail}
+                onChange={(e) => setStoreConfig({ ...storeConfig, supportEmail: e.target.value })}
+                className="input-field"
+              />
             </div>
+          </div>
 
-          </form>
-        </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="apple-section-label block mb-1">Support Phone</label>
+              <input
+                type="text"
+                value={storeConfig.supportPhone}
+                onChange={(e) => setStoreConfig({ ...storeConfig, supportPhone: e.target.value })}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="apple-section-label block mb-1">GST Rate (%)</label>
+              <input
+                type="number"
+                value={storeConfig.gstPercentage}
+                onChange={(e) => setStoreConfig({ ...storeConfig, gstPercentage: e.target.value })}
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="apple-section-label block mb-1">Currency Format</label>
+              <select
+                value={storeConfig.currency}
+                onChange={(e) => setStoreConfig({ ...storeConfig, currency: e.target.value })}
+                className="input-field cursor-pointer"
+              >
+                <option value="INR (₹)">Indian Rupee (₹ INR)</option>
+                <option value="USD ($)">US Dollar ($ USD)</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-black/[0.05] flex justify-end">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              type="submit"
+              className="btn btn-primary shadow-md shadow-blue-500/20 cursor-pointer"
+            >
+              {saved ? <Check size={15} strokeWidth={2.5} /> : <Save size={15} strokeWidth={2} />}
+              <span>{saved ? "Saved!" : "Save Changes"}</span>
+            </motion.button>
+          </div>
+        </form>
       </div>
     </div>
   );

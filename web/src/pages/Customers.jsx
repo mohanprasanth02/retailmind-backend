@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Users, Mail, Phone, MapPin, Calendar, Search, UserCheck } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Users, Mail, Phone, MapPin, Calendar, Search, UserCheck, Star, ShoppingBag } from "lucide-react";
 import { formatPrice } from "../utils/currency";
 import Skeleton from "../components/Skeleton";
 import { API_BASE_URL } from "../config";
-
-const IndianRupee = (props) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M6 3h12" />
-    <path d="M6 8h12" />
-    <path d="M6 13h4.5a4.5 4.5 0 0 1 0 9" />
-    <path d="M10.5 13 18 22" />
-    <path d="M6 3c5 0 6.5 5 6.5 5" />
-  </svg>
-);
-
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -23,6 +12,7 @@ const Customers = () => {
   const [search, setSearch]       = useState("");
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const [cRes, oRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/customers`),
@@ -30,13 +20,18 @@ const Customers = () => {
       ]);
       if (cRes.ok) setCustomers(await cRes.json());
       if (oRes.ok) setOrders(await oRes.json());
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
+
   useEffect(() => { fetchData(); }, []);
 
   const getStats = (customer) => {
     const custOrders = orders.filter(o =>
-      o.customerName === customer.name || o.phone === customer.phone
+      o.customerName === customer.name || (customer.phone && o.phone === customer.phone)
     );
     const completed = custOrders.filter(o => o.status === "Completed");
     const total = completed.reduce((s, o) => s + (o.total || 0), 0);
@@ -44,127 +39,158 @@ const Customers = () => {
   };
 
   const filtered = customers.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search)
+    (c.name && c.name.toLowerCase().includes(search.toLowerCase())) ||
+    (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
+    (c.phone && c.phone.includes(search))
   );
 
-  const totalSpent = orders.filter(o => o.status === "Completed").reduce((s, o) => s + (o.total || 0), 0);
+  const totalRevenue = orders.filter(o => o.status === "Completed").reduce((s, o) => s + (o.total || 0), 0);
 
   return (
-    <div className="space-y-7 relative z-10">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="section-header">
-        <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "rgba(34,211,238,0.12)", border: "1px solid rgba(34,211,238,0.2)" }}>
-              <Users size={17} style={{ color: "#22d3ee" }} />
-            </span>
-            Customer Directory
-          </h1>
-          <p className="section-subtitle">Review customer records, transaction history and contact details</p>
+    <div className="space-y-6 relative z-10">
+      {/* ── Page Header Bar ───────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="pb-4 border-b border-black/[0.06]"
+      >
+        <span className="apple-section-label block mb-1 text-[#007AFF]">
+          Customer Relationships
+        </span>
+        <h1 className="apple-hero-title">
+          Know your buyers inside out.
+        </h1>
+        <p className="apple-hero-subtitle">
+          Comprehensive customer profiles, purchase history, channel contacts, and lifetime revenue analytics.
+        </p>
+      </motion.div>
+
+      {/* ── Summary Stats ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Total Customers</p>
+            <h3 className="text-xl font-bold text-[#1D1D1F] m-0">{customers.length} Profiles</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center">
+            <Users size={18} strokeWidth={2} />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Orders Placed</p>
+            <h3 className="text-xl font-bold text-[#1D1D1F] m-0">{orders.length} Orders</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#F2F1FD] text-[#5856D6] flex items-center justify-center">
+            <ShoppingBag size={18} strokeWidth={2} />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Lifetime Revenue</p>
+            <h3 className="text-xl font-bold text-[#34C759] m-0">{formatPrice(totalRevenue)}</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#EAF8ED] text-[#34C759] flex items-center justify-center">
+            <UserCheck size={18} strokeWidth={2} />
+          </div>
         </div>
       </div>
 
-      {/* ── Summary ────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Total Customers", value: customers.length, color: "#22d3ee" },
-          { label: "Total Orders",    value: orders.length,    color: "#a78bfa" },
-          { label: "Revenue Generated", value: formatPrice(totalSpent), color: "#34d399", isStr: true },
-        ].map(s => (
-          <div key={s.label} className="glass-card p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{ background: `${s.color}15`, border: `1px solid ${s.color}25` }}>
-              <UserCheck size={16} style={{ color: s.color }} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-              <p className="text-xl font-bold" style={{ color: s.color }}>{s.isStr ? s.value : s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Search ─────────────────────────────────────────── */}
+      {/* ── Search Bar ───────────────────────────────────────────── */}
       <div className="relative max-w-md">
-        <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-        <input type="text" placeholder="Search by name, email, or phone..." value={search}
-          onChange={(e) => setSearch(e.target.value)} className="input-field pl-10" />
+        <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B]" />
+        <input
+          type="text"
+          placeholder="Search by customer name, email or phone..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input-field pl-9"
+        />
       </div>
 
-      {/* ── Grid ───────────────────────────────────────────── */}
+      {/* ── Customer Cards Grid ──────────────────────────────────── */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {[1,2,3,4,5,6].map(i => <Skeleton key={i} variant="card" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} variant="card" />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="glass-card p-12 text-center bg-white rounded-2xl border border-black/[0.06]">
+          <Users size={36} className="mx-auto mb-3 text-[#86868B] opacity-30" />
+          <p className="text-sm font-semibold text-[#86868B] m-0">No customer records found</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {filtered.length === 0 ? (
-            <div className="glass-card p-12 text-center col-span-full">
-              <Users size={36} className="mx-auto mb-3 opacity-20" />
-              <p style={{ color: "var(--text-muted)" }}>No customers match your search</p>
-            </div>
-          ) : filtered.map((c, i) => {
-            const stats = getStats(c);
-            const initials = c.name?.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "?";
-            return (
-              <motion.div key={c.uid} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }} className="glass-card p-5 flex flex-col gap-4">
-                {/* Avatar + Name */}
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0"
-                      style={{ background: "linear-gradient(135deg, #22d3ee20, #60a5fa20)", border: "1px solid rgba(34,211,238,0.2)", color: "#22d3ee" }}>
-                      {initials}
+        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <AnimatePresence>
+            {filtered.map((c, i) => {
+              const { orderCount, totalSpent } = getStats(c);
+              const isVIP = totalSpent > 10000 || orderCount >= 3;
+
+              return (
+                <motion.div
+                  key={c.customerId || i}
+                  layout
+                  initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  whileHover={{ y: -3 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25, delay: i * 0.03 }}
+                  className="glass-card p-4 bg-white rounded-2xl border border-black/[0.06] shadow-xs flex flex-col justify-between"
+                >
+                  <div>
+                    {/* Customer Header */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#007AFF] to-[#0051A8] text-white flex items-center justify-center font-bold text-base shadow-sm">
+                        {c.name ? c.name.charAt(0).toUpperCase() : "C"}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="text-sm font-bold text-[#1D1D1F] truncate m-0">
+                            {c.name || "Anonymous Customer"}
+                          </h3>
+                          {isVIP && (
+                            <span className="badge text-[9px] font-extrabold bg-[#FFF4E5] text-[#FF9500] flex items-center gap-0.5">
+                              <Star size={9} fill="#FF9500" /> VIP
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-[#86868B] flex items-center gap-1 mt-0.5 m-0">
+                          <Mail size={11} /> {c.email || "No email on record"}
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Contact Details */}
+                    <div className="space-y-1.5 p-3 rounded-xl bg-black/[0.02] border border-black/[0.04] text-xs text-[#515154] mb-3">
+                      <div className="flex items-center gap-2">
+                        <Phone size={12} className="text-[#86868B]" />
+                        <span>{c.phone || "No phone number"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <MapPin size={12} className="text-[#86868B]" />
+                        <span className="truncate">{c.address || "India"}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Metrics Footer */}
+                  <div className="flex items-center justify-between pt-3 border-t border-black/[0.05]">
                     <div>
-                      <h2 className="font-bold text-[15px]" style={{ color: "var(--text-primary)" }}>{c.name}</h2>
-                      <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>UID: {c.uid?.slice(0, 10)}…</p>
+                      <span className="text-[10px] text-[#86868B] block">Total Orders</span>
+                      <span className="text-xs font-bold text-[#1D1D1F]">{orderCount} Orders</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-[#86868B] block">Total Spent</span>
+                      <span className="text-xs font-bold text-[#34C759]">{formatPrice(totalSpent)}</span>
                     </div>
                   </div>
-                  <span className="badge" style={{ background: "rgba(52,211,153,0.1)", color: "#34d399", border: "1px solid rgba(52,211,153,0.25)" }}>
-                    Active
-                  </span>
-                </div>
-
-                {/* Contact Info */}
-                <div className="space-y-2">
-                  <p className="flex items-center gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                    <Mail size={12} style={{ color: "var(--text-muted)" }} />{c.email}
-                  </p>
-                  <p className="flex items-center gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                    <Phone size={12} style={{ color: "var(--text-muted)" }} />{c.phone}
-                  </p>
-                  <p className="flex items-start gap-2 text-[12px]" style={{ color: "var(--text-secondary)" }}>
-                    <MapPin size={12} className="mt-0.5 flex-shrink-0" style={{ color: "var(--text-muted)" }} />
-                    <span className="leading-snug">{c.address}</span>
-                  </p>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-3 pt-3" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-                  <div className="p-3 rounded-xl text-center"
-                    style={{ background: "rgba(34,211,238,0.05)", border: "1px solid rgba(34,211,238,0.1)" }}>
-                    <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Total Spent</p>
-                    <p className="font-bold flex items-center justify-center gap-0.5" style={{ color: "#22d3ee" }}>
-                      <IndianRupee size={12} />
-                      {stats.totalSpent.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="p-3 rounded-xl text-center"
-                    style={{ background: "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.1)" }}>
-                    <p className="text-[9px] font-bold uppercase tracking-wider mb-1" style={{ color: "var(--text-muted)" }}>Orders</p>
-                    <p className="font-bold flex items-center justify-center gap-1" style={{ color: "#a78bfa" }}>
-                      <Calendar size={12} />{stats.orderCount || c.previousOrders || 0}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Warehouse, Search, AlertTriangle, Plus, Minus, Edit, Save, RefreshCw, Package, BarChart2 } from "lucide-react";
+import { Warehouse, Search, AlertTriangle, Plus, Minus, RefreshCw, Package, BarChart2 } from "lucide-react";
 import { formatPrice } from "../utils/currency";
 import Skeleton from "../components/Skeleton";
 import { API_BASE_URL } from "../config";
@@ -9,199 +9,238 @@ const Inventory = () => {
   const [products, setProducts]               = useState([]);
   const [loading, setLoading]                 = useState(true);
   const [search, setSearch]                   = useState("");
-  const [selectedCategory, setCategory]       = useState("all");
   const [selectedStockStatus, setStockStatus] = useState("all");
-  const [editingId, setEditingId]             = useState(null);
-  const [editStockValue, setEditStockValue]   = useState("");
 
   const fetchInventory = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/products`);
       if (res.ok) setProducts(await res.json());
-    } catch (e) { console.error(e); } finally { setLoading(false); }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
+
   useEffect(() => { fetchInventory(); }, []);
 
   const handleAdjustStock = async (productId, newStock) => {
     if (newStock < 0) return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/inventory/${productId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stock: newStock }),
       });
       if (res.ok) {
         const updated = await res.json();
         setProducts(products.map(p => p.productId === productId ? { ...p, stock: updated.stock } : p));
-        setEditingId(null);
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const categories = ["all", ...new Set(products.map(p => p.category))];
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
-    const matchCat = selectedCategory === "all" || p.category === selectedCategory;
-    const matchStock = selectedStockStatus === "all" ? true
+    const matchSearch =
+      (p.name && p.name.toLowerCase().includes(search.toLowerCase())) ||
+      (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()));
+    const matchStock =
+      selectedStockStatus === "all" ? true
       : selectedStockStatus === "low" ? p.stock < 10 && p.stock > 0
       : selectedStockStatus === "out" ? p.stock === 0
       : p.stock >= 10;
-    return matchSearch && matchCat && matchStock;
+    return matchSearch && matchStock;
   });
 
   const totalUnits = products.reduce((s, p) => s + p.stock, 0);
-  const lowCount = products.filter(p => p.stock < 10).length;
+  const lowCount = products.filter(p => p.stock < 10 && p.stock > 0).length;
   const outCount = products.filter(p => p.stock === 0).length;
 
   return (
-    <div className="space-y-7 relative z-10">
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="section-header">
+    <div className="space-y-6 relative z-10">
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]"
+      >
         <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.2)" }}>
-              <Warehouse size={17} style={{ color: "#a78bfa" }} />
-            </span>
-            Inventory Tracking
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            Warehouse & Stock Control
+          </span>
+          <h1 className="apple-hero-title">
+            Precision stock control.
           </h1>
-          <p className="section-subtitle">Manage stock levels, configure restocks, inspect supplier data</p>
+          <p className="apple-hero-subtitle">
+            Live inventory adjustments, automated low-stock warnings, and supplier management.
+          </p>
         </div>
-        <button onClick={fetchInventory} className="btn btn-ghost">
-          <RefreshCw size={13} /> Reload Stock
-        </button>
-      </div>
 
-      {/* ── Summary Stat Cards ───────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: "Total Units in Store", value: totalUnits, color: "#a78bfa" },
-          { label: "Low Stock Items",       value: lowCount,  color: "#fbbf24" },
-          { label: "Out of Stock",          value: outCount,  color: "#fb7185" },
-        ].map(s => (
-          <div key={s.label} className="glass-card p-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: `${s.color}15`, border: `1px solid ${s.color}25` }}>
-              <BarChart2 size={16} style={{ color: s.color }} />
-            </div>
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{s.label}</p>
-              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value.toLocaleString()}</p>
-            </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={fetchInventory}
+          className="btn btn-ghost shadow-xs self-start md:self-auto cursor-pointer"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#007AFF" }} />
+          <span>Reload Stock</span>
+        </motion.button>
+      </motion.div>
+
+      {/* ── Summary Cards ─────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Total Store Units</p>
+            <h3 className="text-xl font-bold text-[#1D1D1F] m-0">{totalUnits.toLocaleString("en-IN")} Units</h3>
           </div>
-        ))}
-      </div>
-
-      {/* ── Filters Row ──────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "var(--text-muted)" }} />
-          <input type="text" placeholder="Search by name or SKU..." value={search}
-            onChange={(e) => setSearch(e.target.value)} className="input-field pl-10" />
+          <div className="w-10 h-10 rounded-xl bg-[#F2F1FD] text-[#5856D6] flex items-center justify-center">
+            <Warehouse size={18} strokeWidth={2} />
+          </div>
         </div>
-        <select value={selectedCategory} onChange={(e) => setCategory(e.target.value)} className="input-field w-auto min-w-[160px]">
-          {categories.map(c => <option key={c} value={c}>{c === "all" ? "All Categories" : c}</option>)}
-        </select>
-        <select value={selectedStockStatus} onChange={(e) => setStockStatus(e.target.value)} className="input-field w-auto min-w-[180px]">
-          <option value="all">All Stock Levels</option>
-          <option value="in">In Stock (≥10)</option>
-          <option value="low">Low Stock (&lt;10)</option>
-          <option value="out">Out of Stock</option>
-        </select>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Low Stock Warning</p>
+            <h3 className="text-xl font-bold text-[#FF9500] m-0">{lowCount} Items</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#FFF4E5] text-[#FF9500] flex items-center justify-center">
+            <AlertTriangle size={18} strokeWidth={2} />
+          </div>
+        </div>
+
+        <div className="glass-card p-4 rounded-2xl bg-white border border-black/[0.06] shadow-xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase text-[#86868B] tracking-wider m-0 mb-1">Out of Stock</p>
+            <h3 className="text-xl font-bold text-[#FF3B30] m-0">{outCount} Items</h3>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-[#FFEBEA] text-[#FF3B30] flex items-center justify-center">
+            <Package size={18} strokeWidth={2} />
+          </div>
+        </div>
       </div>
 
-      {/* ── Table ─────────────────────────────────────────────── */}
-      {loading ? (
-        <Skeleton variant="table" rows={6} />
-      ) : (
+      {/* ── Filter Bar ──────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-white border border-black/[0.06] shadow-xs">
+        <div className="relative min-w-[240px] flex-1">
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868B] z-10 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search stock by product name or SKU..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: "42px" }}
+          />
+        </div>
 
-        <div className="glass-card overflow-hidden">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>SKU</th>
-                <th>Category</th>
-                <th className="text-right">Price</th>
-                <th className="text-center">Stock</th>
-                <th>Supplier</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12">
-                  <Package size={32} className="mx-auto mb-2 opacity-20" />
-                  <p style={{ color: "var(--text-muted)" }}>No products match your filters</p>
-                </td></tr>
-              ) : filtered.map((p, i) => {
-                const isLow = p.stock < 10;
-                const isOut = p.stock === 0;
-                const isEditing = editingId === p.productId;
-                return (
-                  <motion.tr key={p.productId} as="tr"
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <img src={p.image} alt={p.name}
-                          className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
-                          style={{ border: "1px solid var(--border-subtle)" }} />
-                        <div>
-                          <p className="font-semibold text-[13px]" style={{ color: "var(--text-primary)" }}>{p.name}</p>
-                          <p className="text-[10px] font-mono" style={{ color: "var(--text-muted)" }}>ID: {p.productId?.slice(0, 8)}…</p>
+        <div className="apple-segmented-control">
+          {[
+            { id: "all", label: "All Items" },
+            { id: "low", label: "Low Stock" },
+            { id: "out", label: "Out of Stock" }
+          ].map((status) => (
+            <button
+              key={status.id}
+              onClick={() => setStockStatus(status.id)}
+              className={`apple-segmented-btn ${selectedStockStatus === status.id ? "active" : ""}`}
+            >
+              {status.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Table / Grid ───────────────────────────────────────── */}
+      {loading ? (
+        <div className="space-y-3">
+          {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} variant="card" />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="glass-card p-12 text-center bg-white rounded-2xl border border-black/[0.06]">
+          <Warehouse size={36} className="mx-auto mb-3 text-[#86868B] opacity-30" />
+          <p className="text-sm font-semibold text-[#86868B] m-0">No inventory items found</p>
+        </div>
+      ) : (
+        <div className="glass-card overflow-hidden bg-white rounded-2xl border border-black/[0.06] shadow-xs">
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th style={{ minWidth: 220, padding: "14px 20px" }}>Product</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>SKU</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Category</th>
+                  <th style={{ minWidth: 120, padding: "14px 20px" }}>Price (₹)</th>
+                  <th style={{ minWidth: 150, padding: "14px 20px" }}>Stock Status</th>
+                  <th style={{ minWidth: 130, padding: "14px 20px", textAlign: "right" }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((prod) => {
+                  const isLow = prod.stock < 10 && prod.stock > 0;
+                  const isOut = prod.stock === 0;
+
+                  return (
+                    <tr key={prod.productId}>
+                      <td style={{ padding: "14px 20px" }} className="font-bold text-[#1D1D1F]">
+                        <div className="flex items-center gap-3">
+                          {prod.image ? (
+                            <img src={prod.image} alt={prod.name} className="w-8 h-8 rounded-lg object-cover border border-black/10 flex-shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-lg bg-[#F2F2F7] flex items-center justify-center text-[#86868B]">
+                              <Package size={14} />
+                            </div>
+                          )}
+                          <span className="truncate">{prod.name}</span>
                         </div>
-                      </div>
-                    </td>
-                    <td className="font-mono text-[11px]">{p.sku}</td>
-                    <td>
-                      <span className="badge gray">{p.category}</span>
-                    </td>
-                    <td className="text-right font-semibold">{formatPrice(p.price)}</td>
-                    <td>
-                      <div className="flex flex-col items-center gap-1">
-                        {isEditing ? (
-                          <div className="flex items-center gap-1.5">
-                            <input type="number" value={editStockValue}
-                              onChange={(e) => setEditStockValue(e.target.value)}
-                              className="input-field w-16 text-center py-1 text-[12px]" />
-                            <button onClick={() => handleAdjustStock(p.productId, parseInt(editStockValue) || 0)}
-                              className="p-1.5 rounded-lg" style={{ background: "rgba(52,211,153,0.15)", color: "#34d399" }}>
-                              <Save size={12} />
-                            </button>
-                          </div>
+                      </td>
+                      <td style={{ padding: "14px 20px" }} className="font-mono text-xs text-[#86868B]">{prod.sku}</td>
+                      <td style={{ padding: "14px 20px" }}>
+                        <span className="badge gray">{prod.category}</span>
+                      </td>
+                      <td style={{ padding: "14px 20px" }} className="font-bold text-[#1D1D1F]">{formatPrice(prod.price)}</td>
+                      <td style={{ padding: "14px 20px" }}>
+                        {isOut ? (
+                          <span className="badge red">Out of Stock</span>
+                        ) : isLow ? (
+                          <span className="badge orange">Low Stock ({prod.stock})</span>
                         ) : (
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => handleAdjustStock(p.productId, p.stock - 1)}
-                              className="p-1 rounded-lg btn-ghost"><Minus size={11} /></button>
-                            <span className="font-bold text-[14px] min-w-[28px] text-center"
-                              style={{ color: isOut ? "#fb7185" : isLow ? "#fbbf24" : "var(--text-primary)" }}>
-                              {p.stock}
-                            </span>
-                            <button onClick={() => handleAdjustStock(p.productId, p.stock + 1)}
-                              className="p-1 rounded-lg btn-ghost"><Plus size={11} /></button>
-                          </div>
+                          <span className="badge green">Normal ({prod.stock})</span>
                         )}
-                        {isLow && !isEditing && (
-                          <span className="flex items-center gap-1 text-[9px] font-bold uppercase"
-                            style={{ color: isOut ? "#fb7185" : "#fbbf24" }}>
-                            <AlertTriangle size={9} />
-                            {isOut ? "Out of Stock" : "Low Stock"}
+                      </td>
+                      <td style={{ padding: "14px 20px", textAlign: "right" }}>
+                        <div className="flex items-center justify-end gap-2">
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleAdjustStock(prod.productId, prod.stock - 1)}
+                            className="w-7 h-7 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+                            title="Decrease Stock"
+                          >
+                            <Minus size={12} />
+                          </motion.button>
+
+                          <span className="w-8 text-center font-bold text-xs text-[#1D1D1F]">
+                            {prod.stock}
                           </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="text-[12px]">{p.supplier || "Direct"}</td>
-                    <td className="text-right">
-                      <button
-                        onClick={() => isEditing ? setEditingId(null) : (setEditingId(p.productId), setEditStockValue(p.stock.toString()))}
-                        className="btn btn-ghost text-[11px]">
-                        <Edit size={11} /> {isEditing ? "Cancel" : "Edit Stock"}
-                      </button>
-                    </td>
-                  </motion.tr>
-                );
-              })}
-            </tbody>
-          </table>
+
+                          <motion.button
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleAdjustStock(prod.productId, prod.stock + 1)}
+                            className="w-7 h-7 rounded-lg bg-black/5 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+                            title="Increase Stock"
+                          >
+                            <Plus size={12} />
+                          </motion.button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

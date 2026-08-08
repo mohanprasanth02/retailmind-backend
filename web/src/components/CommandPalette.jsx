@@ -98,8 +98,8 @@ const CommandPalette = ({ open, onClose }) => {
             onClick={onClose}
             style={{
               position: "fixed", inset: 0, zIndex: 9000,
-              background: "rgba(5,5,7,0.75)",
-              backdropFilter: "blur(8px)",
+              background: "rgba(0,0,0,0.3)",
+              backdropFilter: "blur(6px)",
             }}
           />
 
@@ -111,18 +111,18 @@ const CommandPalette = ({ open, onClose }) => {
             transition={{ type: "spring", stiffness: 480, damping: 36 }}
             style={{
               position: "fixed", top: "18%", left: "50%", transform: "translateX(-50%)",
-              zIndex: 9001, width: "100%", maxWidth: 580,
-              background: "rgba(10,10,14,0.99)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              zIndex: 9001, width: "90%", maxWidth: 580,
+              background: "rgba(255,255,255,0.98)",
+              border: "1px solid rgba(0,0,0,0.1)",
               borderRadius: 20,
-              boxShadow: "0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05)",
               backdropFilter: "blur(32px)",
               overflow: "hidden",
             }}
           >
             {/* Search Bar */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-              <Search size={16} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+              <Search size={16} style={{ color: "#86868B", flexShrink: 0 }} />
               <input
                 ref={inputRef}
                 value={query}
@@ -130,13 +130,13 @@ const CommandPalette = ({ open, onClose }) => {
                 placeholder="Search pages, actions, products…"
                 style={{
                   flex: 1, background: "transparent", border: "none", outline: "none",
-                  color: "var(--text-primary)", fontSize: 14, fontFamily: "'Inter', sans-serif",
+                  color: "#1D1D1F", fontSize: 14, fontFamily: "inherit", fontWeight: 500,
                 }}
               />
               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 <kbd style={{
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: 6, padding: "2px 6px", fontSize: 10, color: "rgba(255,255,255,0.4)",
+                  background: "#F5F5F7", border: "1px solid rgba(0,0,0,0.1)",
+                  borderRadius: 6, padding: "2px 6px", fontSize: 10, color: "#86868B",
                   fontFamily: "monospace",
                 }}>ESC</kbd>
               </div>

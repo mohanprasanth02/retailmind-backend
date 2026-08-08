@@ -385,7 +385,7 @@ class _OrderFormScreenState extends State<OrderFormScreen> with SingleTickerProv
                                           return DropdownMenuItem<String>(
                                             value: p['name'] as String,
                                             child: Text(
-                                              '${p['name']} (\$${p['price']})',
+                                              '${p['name']} (₹${p['price']})',
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(fontSize: 13),
                                             ),

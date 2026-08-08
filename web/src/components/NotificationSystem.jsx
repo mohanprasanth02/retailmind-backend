@@ -31,12 +31,12 @@ const Toast = ({ id, title, message, type = "info", onDismiss }) => {
       animate={{ opacity: 1, x: 0, scale: 1 }}
       exit={{ opacity: 0, x: 80, scale: 0.92 }}
       transition={{ type: "spring", stiffness: 380, damping: 30 }}
-      className="flex items-start gap-3 p-4 rounded-2xl shadow-2xl w-80 relative overflow-hidden cursor-pointer"
+      className="flex items-start gap-3 p-4 rounded-2xl shadow-xl w-80 relative overflow-hidden cursor-pointer"
       style={{
-        background: "rgba(10,10,14,0.96)",
+        background: "rgba(255,255,255,0.96)",
         border: `1px solid ${cfg.border}`,
         backdropFilter: "blur(20px)",
-        boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${cfg.border}`,
+        boxShadow: `0 12px 36px rgba(0,0,0,0.12), 0 0 0 1px ${cfg.border}`,
       }}
       onClick={() => onDismiss(id)}
     >
@@ -123,13 +123,7 @@ const BellDropdown = ({ notifications, unreadCount, onMarkAll }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="absolute right-0 top-11 z-50 w-80 rounded-2xl overflow-hidden"
-              style={{
-                background: "rgba(10,10,14,0.98)",
-                border: "1px solid var(--border-default)",
-                backdropFilter: "blur(24px)",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.7)",
-              }}
+              className="absolute right-0 top-11 z-50 w-80 rounded-2xl overflow-hidden bg-white/95 border border-black/10 backdrop-blur-2xl shadow-xl"
             >
               {/* Header */}
               <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>

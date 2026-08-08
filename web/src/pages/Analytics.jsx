@@ -22,8 +22,8 @@ const IndianRupee = (props) => (
 );
 
 
-const PIE_COLORS  = ["#60a5fa", "#34d399", "#a78bfa", "#fbbf24", "#fb7185", "#22d3ee"];
-const BAR_COLORS  = ["#60a5fa", "#34d399", "#a78bfa", "#fbbf24", "#fb7185"];
+const PIE_COLORS  = ["#007AFF", "#34C759", "#5856D6", "#FF9500", "#FF3B30", "#30B0C7"];
+const BAR_COLORS  = ["#007AFF", "#34C759", "#5856D6", "#FF9500", "#FF3B30"];
 const DOW_LABELS  = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => `${i}:00`);
 
@@ -31,11 +31,12 @@ const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => `${i}:00`);
 const CustomTip = ({ active, payload, label, prefix = "" }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="px-4 py-3 rounded-xl text-xs"
-      style={{ background: "rgba(10,10,14,0.97)", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(20px)" }}>
-      <p className="font-semibold mb-1" style={{ color: "var(--text-secondary)" }}>{label}</p>
+    <div className="px-3.5 py-2.5 rounded-2xl bg-white/95 border border-black/10 shadow-lg backdrop-blur-xl text-xs">
+      <p className="font-semibold text-[#86868B] mb-0.5">{label}</p>
       {payload.map((p, i) => (
-        <p key={i} className="font-bold text-sm" style={{ color: p.color || p.fill }}>{prefix}{formatPrice(p.value)}</p>
+        <p key={i} className="font-bold text-sm text-[#007AFF] m-0">
+          {prefix}{formatPrice(p.value)}
+        </p>
       ))}
     </div>
   );
@@ -43,35 +44,37 @@ const CustomTip = ({ active, payload, label, prefix = "" }) => {
 
 // ── Mini Stat Card ────────────────────────────────────────────────────────────
 const MiniStat = ({ label, value, delta, color, icon: Icon, prefix = "", delay = 0 }) => (
-  <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    className="glass-card p-5 relative overflow-hidden">
-    <div className="absolute top-0 left-0 right-0 h-[2px]"
-      style={{ background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-    <div className="absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-10 translate-x-10 pointer-events-none"
-      style={{ background: `radial-gradient(circle, ${color}12, transparent 70%)` }} />
-
+  <motion.div
+    initial={{ opacity: 0, y: 14, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    whileHover={{ y: -2 }}
+    transition={{ delay, duration: 0.35, type: "spring", stiffness: 350, damping: 25 }}
+    className="glass-card p-5 rounded-2xl bg-white border border-black/[0.06] shadow-xs relative overflow-hidden"
+  >
     <div className="flex items-start justify-between relative z-10">
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[0.1em] mb-2" style={{ color: "var(--text-muted)" }}>{label}</p>
-        <p className="text-2xl font-bold" style={{ color: "var(--text-primary)", fontFamily: "'Space Grotesk', sans-serif" }}>
-          {prefix}{typeof value === "number" ? value.toLocaleString() : value}
+        <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#86868B] mb-1">
+          {label}
         </p>
+        <h3 className="text-2xl font-bold tracking-tight text-[#1D1D1F] m-0">
+          {prefix}{typeof value === "number" ? value.toLocaleString("en-IN") : value}
+        </h3>
         {delta !== undefined && (
           <div className="flex items-center gap-1 mt-2">
             {delta >= 0
-              ? <ArrowUpRight size={11} style={{ color: "#34d399" }} />
-              : <ArrowDownRight size={11} style={{ color: "#fb7185" }} />}
-            <span className="text-[11px] font-semibold"
-              style={{ color: delta >= 0 ? "#34d399" : "#fb7185" }}>
+              ? <ArrowUpRight size={12} className="text-[#34C759]" strokeWidth={2.5} />
+              : <ArrowDownRight size={12} className="text-[#FF3B30]" strokeWidth={2.5} />}
+            <span className={`text-[11px] font-bold ${delta >= 0 ? "text-[#34C759]" : "text-[#FF3B30]"}`}>
               {Math.abs(delta)}% vs last week
             </span>
           </div>
         )}
       </div>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-        style={{ background: `${color}15`, border: `1px solid ${color}25` }}>
-        <Icon size={18} style={{ color }} />
+      <div
+        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs"
+        style={{ background: `${color}15`, border: `1px solid ${color}25` }}
+      >
+        <Icon size={19} style={{ color }} strokeWidth={2} />
       </div>
     </div>
   </motion.div>

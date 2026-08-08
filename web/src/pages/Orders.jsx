@@ -13,17 +13,17 @@ import { AnimatePresence as AP } from "framer-motion";
 import { API_BASE_URL } from "../config";
 
 const PLATFORM_CONFIG = {
-  whatsapp:  { label: "WhatsApp",  color: "#25D366", bg: "rgba(37,211,102,0.1)",  border: "rgba(37,211,102,0.25)" },
-  instagram: { label: "Instagram", color: "#E1306C", bg: "rgba(225,48,108,0.1)", border: "rgba(225,48,108,0.25)" },
-  website:   { label: "Website",   color: "#60a5fa", bg: "rgba(96,165,250,0.1)", border: "rgba(96,165,250,0.25)" },
-  email:     { label: "Email",     color: "#fbbf24", bg: "rgba(251,191,36,0.1)", border: "rgba(251,191,36,0.25)" },
+  whatsapp:  { label: "WhatsApp",  color: "#25D366", bg: "rgba(37,211,102,0.12)", border: "rgba(37,211,102,0.25)" },
+  instagram: { label: "Instagram", color: "#E1306C", bg: "rgba(225,48,108,0.12)", border: "rgba(225,48,108,0.25)" },
+  website:   { label: "Website",   color: "#007AFF", bg: "#E5F1FF", border: "rgba(0,122,255,0.25)" },
+  email:     { label: "Email",     color: "#FF9500", bg: "#FFF4E5", border: "rgba(255,149,0,0.25)" },
 };
 
 const STATUS_CONFIG = {
-  Pending:    { color: "#fbbf24", bg: "rgba(251,191,36,0.1)",   border: "rgba(251,191,36,0.25)"  },
-  Processing: { color: "#60a5fa", bg: "rgba(96,165,250,0.1)",  border: "rgba(96,165,250,0.25)"  },
-  Completed:  { color: "#34d399", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.25)"  },
-  Rejected:   { color: "#fb7185", bg: "rgba(251,113,133,0.1)", border: "rgba(251,113,133,0.25)" },
+  Pending:    { color: "#FF9500", bg: "#FFF4E5", border: "rgba(255,149,0,0.3)"  },
+  Processing: { color: "#007AFF", bg: "#E5F1FF", border: "rgba(0,122,255,0.3)"  },
+  Completed:  { color: "#34C759", bg: "#EAF8ED", border: "rgba(52,199,89,0.3)"  },
+  Rejected:   { color: "#FF3B30", bg: "#FFEBEA", border: "rgba(255,59,48,0.3)" },
 };
 
 const TABS = ["all", "pending", "processing", "completed", "rejected"];
@@ -68,7 +68,6 @@ const Orders = () => {
         body: JSON.stringify({ status: newStatus }),
       });
       if (!isFirebaseConfigured) fetchOrders();
-      // 🎉 Confetti + success toast when order is completed
       if (newStatus === "Completed") {
         fireOrderConfetti();
         setSuccessMsg("Order marked as completed! 🎉");
@@ -88,7 +87,7 @@ const Orders = () => {
   }, {});
 
   return (
-    <div className="space-y-7 relative z-10">
+    <div className="space-y-6 relative z-10">
       {/* ── Success Toast ────────────────────────────────────────────────── */}
       <AP>
         {successMsg && (
@@ -101,36 +100,30 @@ const Orders = () => {
       </AP>
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-
-      <div className="section-header">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]">
         <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.2)" }}>
-              <ShoppingBag size={17} style={{ color: "#fbbf24" }} />
-            </span>
-            Incoming Orders
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            Omnichannel Processing
+          </span>
+          <h1 className="apple-hero-title">
+            All your channels. One unified order stream.
           </h1>
-          <p className="section-subtitle">Real-time AI-parsed platform orders with inventory check</p>
+          <p className="apple-hero-subtitle">
+            AI automatically parses customer messages from WhatsApp, Instagram, Website, and Email into verified orders.
+          </p>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)" }}>
+        {/* Segmented Filter Control */}
+        <div className="apple-segmented-control self-start md:self-auto">
           {TABS.map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className="relative px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-200"
-              style={{
-                background: activeTab === tab ? "rgba(255,255,255,0.08)" : "transparent",
-                color: activeTab === tab ? "var(--text-primary)" : "var(--text-muted)",
-                border: activeTab === tab ? "1px solid var(--border-default)" : "1px solid transparent",
-              }}
+              className={`apple-segmented-btn capitalize ${activeTab === tab ? "active" : ""}`}
             >
               {tab}
               {counts[tab] > 0 && (
-                <span className="ml-1.5 text-[9px] px-1 py-0.5 rounded-full"
-                  style={{ background: "rgba(255,255,255,0.08)", color: "var(--text-secondary)" }}>
+                <span className="ml-1.5 text-[9px] px-1.5 py-0.2 rounded-full bg-black/5 font-mono">
                   {counts[tab]}
                 </span>
               )}

@@ -13,145 +13,162 @@ const SUGGESTIONS = [
 const AIAssistant = () => {
   const [messages, setMessages] = useState([{
     role: "assistant",
-    content: "Hello! I am your **RetailMind AI Operations Brain**. I have access to your live inventory levels, sales histories, and customer directories. Ask me anything about your business performance!",
+    content: "Hello! I am your **RetailMind AI Operations Intelligence**. I am connected to your live stock levels, platform orders, and sales history. How can I assist your store operations today?",
   }]);
-  const [input, setInput]   = useState("");
+  const [input, setInput]     = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const handleSend = async (text) => {
     const msg = text || input;
     if (!msg.trim()) return;
     setMessages(prev => [...prev, { role: "user", content: msg }]);
-    setInput(""); setLoading(true);
+    setInput("");
+    setLoading(true);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/ai/chat`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: msg }),
       });
       const data = res.ok ? await res.json() : null;
-      setMessages(prev => [...prev, { role: "assistant",
-        content: data?.response || "I encountered an error. Please ensure the backend server is running." }]);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: data?.response || "I encountered an issue processing your query. Please verify the backend server status."
+      }]);
     } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Error contacting AI backend. Please check the server." }]);
-    } finally { setLoading(false); }
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: "Unable to reach the AI engine backend. Please verify your connection."
+      }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const formatMessage = (content) =>
     content.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
       part.startsWith("**") && part.endsWith("**")
-        ? <strong key={i} style={{ color: "#60a5fa" }}>{part.slice(2, -2)}</strong>
+        ? <strong key={i} className="text-[#007AFF] font-bold">{part.slice(2, -2)}</strong>
         : part
     );
 
   return (
-    <div className="relative z-10" style={{ height: "calc(100vh - 72px)", display: "flex", flexDirection: "column" }}>
-      {/* ── Header ─────────────────────────────────────────── */}
-      <div className="section-header flex-shrink-0">
+    <div className="relative z-10 h-[calc(100vh-80px)] flex flex-col space-y-4">
+      {/* ── Page Header Bar ───────────────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center justify-between pb-3 border-b border-black/[0.06] flex-shrink-0"
+      >
         <div>
-          <h1 className="section-title flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 rounded-xl"
-              style={{ background: "linear-gradient(135deg, #f59e0b20, #fbbf2420)", border: "1px solid rgba(245,158,11,0.25)" }}>
-              <Bot size={17} style={{ color: "#f59e0b" }} />
-            </span>
-            AI Business Assistant
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            Artificial Intelligence
+          </span>
+          <h1 className="apple-hero-title">
+            Natural language business queries.
           </h1>
-          <p className="section-subtitle">Query inventory, revenue, orders and product analytics in natural language</p>
+          <p className="apple-hero-subtitle">
+            Instantly query sales performance, inventory thresholds, and order status.
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
-          style={{ background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)" }}>
-          <span className="w-2 h-2 rounded-full dot-pulse" style={{ background: "#f59e0b" }} />
-          <span className="text-[11px] font-semibold" style={{ color: "#f59e0b" }}>AI Online</span>
-        </div>
-      </div>
 
-      {/* ── Chat Container ─────────────────────────────────── */}
-      <div className="glass-card flex-1 flex flex-col overflow-hidden" style={{ minHeight: 0 }}>
-        {/* Messages Area */}
-        <div className="flex-1 p-5 overflow-y-auto space-y-5" style={{ minHeight: 0 }}>
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#EAF8ED] border border-[#34C759]/30 text-[#28A745]">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] dot-pulse" />
+          <span className="text-[11px] font-bold">AI Core Online</span>
+        </div>
+      </motion.div>
+
+      {/* ── Main Chat Card Container ───────────────────────────────── */}
+      <div className="glass-card flex-1 flex flex-col overflow-hidden bg-white rounded-2xl border border-black/[0.06] shadow-xs">
+        {/* Messages Scroll Area */}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto space-y-4">
           <AnimatePresence initial={false}>
             {messages.map((m, i) => {
               const isAI = m.role === "assistant";
               return (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 ${isAI ? "" : "flex-row-reverse"}`}>
-                  {/* Avatar */}
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={isAI
-                      ? { background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)" }
-                      : { background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.25)" }
-                    }>
-                    {isAI ? <Bot size={15} style={{ color: "#f59e0b" }} /> : <User size={15} style={{ color: "#60a5fa" }} />}
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-3 ${isAI ? "" : "flex-row-reverse"}`}
+                >
+                  <div
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs ${
+                      isAI ? "bg-[#E5F1FF] text-[#007AFF]" : "bg-[#F2F1FD] text-[#5856D6]"
+                    }`}
+                  >
+                    {isAI ? <Bot size={16} strokeWidth={2} /> : <User size={16} strokeWidth={2} />}
                   </div>
-                  {/* Bubble */}
-                  <div className="max-w-[70%] p-4 rounded-2xl text-[13px] leading-relaxed whitespace-pre-line"
-                    style={isAI
-                      ? { background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)",
-                          borderRadius: "4px 18px 18px 18px" }
-                      : { background: "rgba(96,165,250,0.08)", border: "1px solid rgba(96,165,250,0.2)", color: "var(--text-primary)",
-                          borderRadius: "18px 4px 18px 18px" }
-                    }>
+
+                  <div
+                    className={`max-w-[85%] md:max-w-[70%] p-4 rounded-2xl text-xs md:text-sm leading-relaxed whitespace-pre-line shadow-xs ${
+                      isAI
+                        ? "bg-[#F5F5F7] text-[#1D1D1F] rounded-tl-xs border border-black/[0.04]"
+                        : "bg-[#007AFF] text-white rounded-tr-xs font-medium"
+                    }`}
+                  >
                     {formatMessage(m.content)}
                   </div>
                 </motion.div>
               );
             })}
-          </AnimatePresence>
 
-          {/* Typing indicator */}
-          {loading && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                style={{ background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)" }}>
-                <Bot size={15} style={{ color: "#f59e0b" }} className="animate-pulse" />
-              </div>
-              <div className="p-4 rounded-2xl flex items-center gap-2"
-                style={{ background: "rgba(255,255,255,0.02)", border: "1px solid var(--border-subtle)", borderRadius: "4px 18px 18px 18px" }}>
-                <div className="flex gap-1">
-                  {[0,1,2].map(i => (
-                    <span key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
-                      style={{ background: "#f59e0b", animationDelay: `${i * 0.15}s` }} />
-                  ))}
+            {loading && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center">
+                  <Bot size={16} className="animate-spin" />
                 </div>
-                <span className="text-[12px]" style={{ color: "var(--text-muted)" }}>AI is thinking…</span>
-              </div>
-            </motion.div>
-          )}
+                <div className="bg-[#F5F5F7] px-4 py-3 rounded-2xl text-xs font-semibold text-[#86868B]">
+                  Analyzing store intelligence...
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div ref={chatEndRef} />
         </div>
 
-        {/* Quick Suggestions */}
-        <div className="px-5 py-3 flex flex-wrap gap-2" style={{ borderTop: "1px solid var(--border-subtle)" }}>
-          <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 mr-1" style={{ color: "var(--text-muted)" }}>
-            <Sparkles size={10} style={{ color: "#f59e0b" }} /> Quick:
-          </span>
-          {SUGGESTIONS.map((s, i) => {
+        {/* Suggestion Chips */}
+        <div className="px-4 py-2 border-t border-black/[0.04] bg-[#F5F5F7]/50 flex items-center gap-2 overflow-x-auto">
+          {SUGGESTIONS.map((s, idx) => {
             const Icon = s.icon;
             return (
-              <button key={i} onClick={() => handleSend(s.text)} disabled={loading}
-                className="flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full transition-all disabled:opacity-40"
-                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--border-subtle)", color: "var(--text-secondary)" }}
-                onMouseEnter={e => { e.currentTarget.style.background = "rgba(245,158,11,0.08)"; e.currentTarget.style.borderColor = "rgba(245,158,11,0.25)"; e.currentTarget.style.color = "#f59e0b"; }}
-                onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--text-secondary)"; }}>
-                <Icon size={10} />{s.text}
+              <button
+                key={idx}
+                onClick={() => handleSend(s.text)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white text-[11px] font-semibold text-[#515154] border border-black/[0.06] hover:bg-slate-50 flex-shrink-0 cursor-pointer shadow-xs transition-all"
+              >
+                <Icon size={12} className="text-[#007AFF]" />
+                <span>{s.text}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Input Row */}
-        <form onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-          className="p-4 flex gap-3" style={{ borderTop: "1px solid var(--border-subtle)", background: "rgba(5,5,7,0.6)" }}>
-          <input type="text" value={input} onChange={(e) => setInput(e.target.value)} disabled={loading}
-            placeholder="Ask anything about your business… (e.g. top selling product, total revenue this week)"
-            className="input-field flex-1" />
-          <button type="submit" disabled={loading || !input.trim()}
-            className="btn btn-primary px-4 disabled:opacity-40">
-            <Send size={14} />
-          </button>
-        </form>
+        {/* Input Bar */}
+        <div className="p-3 md:p-4 border-t border-black/[0.06] bg-white flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Ask AI about sales, low stock, revenue trends..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            className="input-field flex-1"
+          />
+          <motion.button
+            whileTap={{ scale: 0.94 }}
+            onClick={() => handleSend()}
+            disabled={loading || !input.trim()}
+            className="w-10 h-10 rounded-xl bg-[#007AFF] text-white flex items-center justify-center disabled:opacity-50 cursor-pointer border-none shadow-md shadow-blue-500/20"
+          >
+            <Send size={16} strokeWidth={2} />
+          </motion.button>
+        </div>
       </div>
     </div>
   );

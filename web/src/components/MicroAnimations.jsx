@@ -182,9 +182,9 @@ export const SuccessToast = ({ message = "Success!", onClose, autoClose = 3000 }
         gap: 12,
         padding: "14px 20px",
         borderRadius: 16,
-        background: "rgba(10,10,14,0.97)",
-        border: "1px solid rgba(52,211,153,0.3)",
-        boxShadow: "0 8px 40px rgba(52,211,153,0.12), 0 0 0 1px rgba(52,211,153,0.1)",
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(52,199,89,0.3)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(52,199,89,0.1)",
         backdropFilter: "blur(20px)",
         maxWidth: 340,
       }}
