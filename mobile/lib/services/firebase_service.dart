@@ -17,12 +17,19 @@ class FirebaseService {
   // Local active user storage for mock mode
   Map<String, dynamic>? _mockUser;
 
-  String _activeBackendUrl = 'http://127.0.0.1:8000';
+  // Default production or local backend URL
+  static const String productionUrl = String.fromEnvironment(
+    'BACKEND_URL',
+    defaultValue: 'https://retailmind-backend.onrender.com',
+  );
+
+  String _activeBackendUrl = productionUrl;
   bool _hasDetectedBackend = false;
 
-  // Determine local backend URL dynamically depending on emulator vs platform
+  // Determine backend URL dynamically
   String get backendUrl {
     if (!_hasDetectedBackend) {
+      if (productionUrl.startsWith('https://')) return productionUrl;
       if (kIsWeb) return 'http://localhost:8000';
       try {
         if (Platform.isAndroid) return 'http://10.0.2.2:8000';
@@ -33,22 +40,17 @@ class FirebaseService {
   }
 
   Future<void> detectBackend() async {
-    if (kIsWeb) {
-      _activeBackendUrl = 'http://localhost:8000';
-      _hasDetectedBackend = true;
-      return;
-    }
-
     final candidates = [
+      if (productionUrl.isNotEmpty) productionUrl,
       'http://127.0.0.1:8000',
       'http://10.0.2.2:8000',
-      'http://10.128.110.10:8000', // Wi-Fi IP address of host
+      'http://10.128.110.10:8000',
     ];
 
     print('[Backend Detector] Probing backend server candidates...');
     for (final url in candidates) {
       try {
-        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(milliseconds: 600));
+        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 3));
         if (res.statusCode == 200) {
           _activeBackendUrl = url;
           _hasDetectedBackend = true;
@@ -59,17 +61,21 @@ class FirebaseService {
     }
 
     // fallback
-    try {
-      if (Platform.isAndroid) {
-        _activeBackendUrl = 'http://10.0.2.2:8000';
-      } else {
+    if (productionUrl.startsWith('https://')) {
+      _activeBackendUrl = productionUrl;
+    } else {
+      try {
+        if (Platform.isAndroid) {
+          _activeBackendUrl = 'http://10.0.2.2:8000';
+        } else {
+          _activeBackendUrl = 'http://127.0.0.1:8000';
+        }
+      } catch (_) {
         _activeBackendUrl = 'http://127.0.0.1:8000';
       }
-    } catch (_) {
-      _activeBackendUrl = 'http://127.0.0.1:8000';
     }
     _hasDetectedBackend = true;
-    print('[Backend Detector] Probing failed. Using fallback: $_activeBackendUrl');
+    print('[Backend Detector] Probing completed. Using backend URL: $_activeBackendUrl');
   }
 
   // --- AUTHENTICATION ---
