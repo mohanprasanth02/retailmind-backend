@@ -58,10 +58,12 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
 
   return (
     <aside
-      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-40 select-none ${
-        mobileOpen ? "mobile-open" : ""
+      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-50 select-none transition-transform duration-300 ease-out bg-white/95 backdrop-blur-2xl border-r border-black/[0.08] ${
+        mobileOpen
+          ? "translate-x-0 shadow-2xl"
+          : "-translate-x-full md:translate-x-0"
       }`}
-      style={{ width: "var(--sidebar-w, 240px)" }}
+      style={{ width: "240px" }}
     >
       {/* ── Brand Header Bar ──────────── */}
       <div className="px-5 pt-5 pb-3 border-b border-black/[0.06] flex items-center justify-between">
@@ -85,11 +87,12 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
             </p>
           </div>
         </Link>
-        
+
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="md:hidden w-7 h-7 rounded-full bg-black/5 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+          className="md:hidden w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+          aria-label="Close menu"
         >
           <X size={14} />
         </button>

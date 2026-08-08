@@ -78,36 +78,38 @@ const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
   const page = PAGE_META[location.pathname] || { title: "RetailMind", subtitle: "" };
 
   return (
-    <header className="apple-vibrancy-header flex items-center justify-between md:px-8 px-4 py-3 flex-shrink-0 sticky top-0 z-30 shadow-xs backdrop-blur-xl bg-white/80 border-b border-black/[0.06]">
+    <header className="apple-vibrancy-header flex items-center justify-between md:px-8 px-4 py-3 flex-shrink-0 sticky top-0 z-30 shadow-xs backdrop-blur-xl bg-white/85 border-b border-black/[0.06]">
       {/* Page title & Mobile Menu Toggle */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 min-w-0">
         <button
           onClick={onToggleMobile}
-          className="md:hidden w-9 h-9 rounded-xl bg-black/5 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+          className="md:hidden w-9 h-9 rounded-xl bg-black/5 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F] flex-shrink-0"
+          aria-label="Open menu"
         >
           <Menu size={18} />
         </button>
 
-        <div>
-          <h2 className="text-base md:text-lg font-extrabold text-[#1D1D1F] tracking-tight m-0 leading-tight">
+        <div className="min-w-0">
+          <h2 className="text-base md:text-lg font-extrabold text-[#1D1D1F] tracking-tight m-0 leading-tight truncate">
             {page.title}
           </h2>
-          <p className="hidden md:block text-[11px] text-[#86868B] font-medium tracking-tight mt-0.5 mb-0">
+          <p className="hidden md:block text-[11px] text-[#86868B] font-medium tracking-tight mt-0.5 mb-0 truncate">
             {page.subtitle}
           </p>
         </div>
       </div>
 
       {/* Right actions — Unified Capsule Bar */}
-      <div className="flex items-center gap-2 bg-black/[0.03] p-1 rounded-full border border-black/[0.06] backdrop-blur-md">
+      <div className="flex items-center gap-1.5 sm:gap-2 bg-black/[0.03] p-1 rounded-full border border-black/[0.06] backdrop-blur-md flex-shrink-0">
         {/* Search capsule button */}
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.96 }}
           onClick={onCmdOpen}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all bg-white text-[#515154] shadow-xs text-xs font-semibold border border-black/[0.06] hover:bg-slate-50 cursor-pointer"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full transition-all bg-white text-[#515154] shadow-xs text-xs font-semibold border border-black/[0.06] hover:bg-slate-50 cursor-pointer"
         >
-          <span>Search</span>
+          <Search size={14} className="text-[#86868B]" />
+          <span className="hidden sm:inline">Search</span>
           <div className="hidden sm:flex items-center gap-0.5 ml-1">
             <kbd className="bg-[#F5F5F7] border border-black/10 rounded px-1.5 text-[10px] font-mono text-[#1D1D1F]">⌘K</kbd>
           </div>
@@ -115,10 +117,10 @@ const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
 
         {/* Pending pill */}
         {pendingCount > 0 && (
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF4E5] border border-[#FF9500]/30 text-[#FF9500]">
+          <div className="hidden xs:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#FFF4E5] border border-[#FF9500]/30 text-[#FF9500]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF9500] animate-pulse" />
             <span className="text-[11px] font-bold">
-              {pendingCount} pending
+              {pendingCount}
             </span>
           </div>
         )}
