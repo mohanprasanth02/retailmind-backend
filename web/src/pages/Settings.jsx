@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Settings as SettingsIcon, ShieldCheck, Database, Cpu, Save, Server, Zap, Globe } from "lucide-react";
 import { fireSuccessBurst, AnimatedCheckmark } from "../components/MicroAnimations";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL, getApiBaseUrl, setApiBaseUrl } from "../config";
 
 const Settings = () => {
   const [sysStatus, setSysStatus] = useState({ mock_db: true, mock_ai: true, status: "offline" });
@@ -12,26 +12,39 @@ const Settings = () => {
     supportPhone: "+91-800-RETAIL",
     gstPercentage: "18",
     currency: "INR (₹)",
+    backendUrl: getApiBaseUrl(),
   });
   const [saved, setSaved] = useState(false);
 
+  const checkStatus = async (url) => {
+    try {
+      const target = url || getApiBaseUrl();
+      const res = await fetch(`${target}/api/status`);
+      if (res.ok) setSysStatus(await res.json());
+      else setSysStatus({ mock_db: true, mock_ai: true, status: "offline" });
+    } catch {
+      setSysStatus({ mock_db: true, mock_ai: true, status: "offline" });
+    }
+  };
+
   useEffect(() => {
-    const check = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/status`);
-        if (res.ok) setSysStatus(await res.json());
-      } catch {}
-    };
-    check();
+    checkStatus();
     const cfg = localStorage.getItem("retailmind_store_config");
-    if (cfg) setStoreConfig(JSON.parse(cfg));
+    if (cfg) {
+      const parsed = JSON.parse(cfg);
+      setStoreConfig((prev) => ({ ...prev, ...parsed, backendUrl: parsed.backendUrl || getApiBaseUrl() }));
+    }
   }, []);
 
   const handleSave = (e) => {
     e.preventDefault();
+    if (storeConfig.backendUrl) {
+      setApiBaseUrl(storeConfig.backendUrl);
+    }
     localStorage.setItem("retailmind_store_config", JSON.stringify(storeConfig));
     setSaved(true);
-    fireSuccessBurst(0.5, 0.5); // 🎉 confetti burst from center
+    fireSuccessBurst(0.5, 0.5);
+    checkStatus(storeConfig.backendUrl);
     setTimeout(() => setSaved(false), 3000);
   };
 
@@ -55,7 +68,7 @@ const Settings = () => {
     {
       icon: Server,
       label: "FastAPI Backend",
-      desc: API_BASE_URL,
+      desc: storeConfig.backendUrl || getApiBaseUrl(),
       active: sysStatus.status === "online",
       badge: sysStatus.status === "online" ? "Online" : "Offline",
       color: sysStatus.status === "online" ? "#34d399" : "#fb7185",
@@ -71,6 +84,7 @@ const Settings = () => {
   ];
 
   const formFields = [
+    { key: "backendUrl",    label: "Backend Server URL (API)", type: "text", span: 2, placeholder: "https://retailmind-backend-698m.onrender.com" },
     { key: "storeName",     label: "Store Name",        type: "text",   span: 2, placeholder: "RetailMind Smart Store" },
     { key: "supportEmail",  label: "Support Email",     type: "email",  span: 1, placeholder: "support@retailmind.ai" },
     { key: "supportPhone",  label: "Support Phone",     type: "text",   span: 1, placeholder: "+91-800-RETAIL" },
