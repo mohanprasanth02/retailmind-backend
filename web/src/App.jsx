@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { API_BASE_URL } from "./config";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
@@ -117,7 +117,7 @@ const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
 
         {/* Pending pill */}
         {pendingCount > 0 && (
-          <div className="hidden xs:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#FFF4E5] border border-[#FF9500]/30 text-[#FF9500]">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-[#FFF4E5] border border-[#FF9500]/30 text-[#FF9500]">
             <span className="w-1.5 h-1.5 rounded-full bg-[#FF9500] animate-pulse" />
             <span className="text-[11px] font-bold">
               {pendingCount}
