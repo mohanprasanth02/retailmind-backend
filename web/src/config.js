@@ -5,7 +5,7 @@ export const getApiBaseUrl = () => {
       return custom.trim().replace(/\/+$/, '');
     }
   }
-  return (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+  return (import.meta.env.VITE_API_URL || 'https://retailmind-backend-698m.onrender.com').replace(/\/+$/, '');
 };
 
 export const setApiBaseUrl = (url) => {
