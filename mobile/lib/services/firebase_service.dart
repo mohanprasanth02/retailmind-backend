@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FirebaseService {
   static final FirebaseService _instance = FirebaseService._internal();
@@ -19,6 +20,37 @@ class FirebaseService {
 
   // Stores registered credentials in mock mode: email → {uid, name, password}
   final Map<String, Map<String, String>> _mockCredentials = {};
+
+  static const _kPrefsKey = 'retailmind_mock_credentials';
+
+  /// Load persisted mock credentials from device storage.
+  Future<void> _loadCredentials() async {
+    if (_mockCredentials.isNotEmpty) return; // already loaded
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kPrefsKey);
+      if (raw != null) {
+        final Map<String, dynamic> decoded = json.decode(raw);
+        decoded.forEach((email, data) {
+          _mockCredentials[email] = Map<String, String>.from(data as Map);
+        });
+        print('[Auth Service] Loaded ${_mockCredentials.length} stored credentials.');
+      }
+    } catch (e) {
+      print('[Auth Service] Could not load credentials: $e');
+    }
+  }
+
+  /// Persist a single credential entry to device storage.
+  Future<void> _saveCredential(String email, Map<String, String> data) async {
+    _mockCredentials[email] = data;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kPrefsKey, json.encode(_mockCredentials));
+    } catch (e) {
+      print('[Auth Service] Could not save credential: $e');
+    }
+  }
 
   // Default production or local backend URL
   static const String productionUrl = String.fromEnvironment(
@@ -123,6 +155,9 @@ class FirebaseService {
         throw Exception('Password must be at least 6 characters.');
       }
 
+      // Load persisted credentials in case this is a fresh app launch
+      await _loadCredentials();
+
       // Check against credentials stored during registration
       final stored = _mockCredentials[email.toLowerCase()];
       if (stored == null) {
@@ -218,11 +253,11 @@ class FirebaseService {
         }
 
         // Save credentials for future logins in this session
-        _mockCredentials[email.toLowerCase()] = {
+        await _saveCredential(email.toLowerCase(), {
           'uid': uid,
           'name': name,
           'password': password,
-        };
+        });
 
         return _mockUser;
       } else {
@@ -236,6 +271,7 @@ class FirebaseService {
       await FirebaseAuth.instance.signOut();
     } else {
       _mockUser = null;
+      // Clear stored session but keep credentials so user can log back in
     }
   }
 
