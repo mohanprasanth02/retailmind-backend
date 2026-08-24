@@ -132,7 +132,7 @@ class FirebaseService {
     }
   }
 
-  Future<Map<String, dynamic>?> signUp(String email, String password, String name) async {
+  Future<Map<String, dynamic>?> signUp(String email, String password, String name, {String phone = ''}) async {
     if (isFirebaseInitialized) {
       try {
         final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
@@ -150,8 +150,28 @@ class FirebaseService {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // ── Register with backend so web dashboard shows this user ──
+        final uid = credential.user?.uid ?? '';
+        try {
+          await http.post(
+            Uri.parse('$backendUrl/api/customers'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'uid': uid,
+              'name': name,
+              'email': email,
+              'phone': phone,
+              'role': 'customer',
+            }),
+          );
+          print('[Auth Service] Customer profile synced to backend dashboard.');
+        } catch (e) {
+          // Non-fatal: backend might be offline; Firestore still has the data
+          print('[Auth Service] Could not sync customer to backend: $e');
+        }
+
         return {
-          'uid': credential.user?.uid,
+          'uid': uid,
           'email': email,
           'name': name,
         };
@@ -163,11 +183,31 @@ class FirebaseService {
       // Mock registration
       await Future.delayed(const Duration(milliseconds: 600));
       if (email.contains('@') && password.length >= 6 && name.isNotEmpty) {
+        final uid = 'mock_uid_${email.split('@')[0]}';
         _mockUser = {
-          'uid': 'mock_uid_${email.split('@')[0]}',
+          'uid': uid,
           'email': email,
           'name': name,
         };
+
+        // ── Register with backend so web dashboard shows this user ──
+        try {
+          await http.post(
+            Uri.parse('$backendUrl/api/customers'),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({
+              'uid': uid,
+              'name': name,
+              'email': email,
+              'phone': phone,
+              'role': 'customer',
+            }),
+          );
+          print('[Auth Service] Mock customer profile synced to backend dashboard.');
+        } catch (e) {
+          print('[Auth Service] Could not sync mock customer to backend: $e');
+        }
+
         return _mockUser;
       } else {
         throw Exception('Sign up inputs fail validation.');
@@ -222,6 +262,7 @@ class FirebaseService {
     
     final fullOrder = {
       'customerName': customerName,
+      'customerId': uid,  // pass real UID so orders are linked to the registered user
       'phone': orderData['phone'] ?? '',
       'address': orderData['address'] ?? '',
       'platform': orderData['platform'] ?? 'website',

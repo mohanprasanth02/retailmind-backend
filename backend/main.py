@@ -68,12 +68,20 @@ class OrderCreateModel(BaseModel):
     platform: str # whatsapp, instagram, website, email
     message: Optional[str] = ""
     products: Optional[List[OrderProductModel]] = []
+    customerId: Optional[str] = ""  # real user UID from mobile registration
 
 class OrderStatusUpdateModel(BaseModel):
     status: str # Pending, Processing, Completed, Rejected
 
 class ChatQuestionModel(BaseModel):
     question: str
+
+class RegisterUserModel(BaseModel):
+    uid: str
+    name: str
+    email: str
+    phone: Optional[str] = ""
+    role: Optional[str] = "customer"
 
 # 3. Seed Firestore Database if empty
 @app.on_event("startup")
@@ -270,7 +278,7 @@ def create_order(payload: OrderCreateModel):
     order_dict["gst"] = 0.0
     order_dict["total"] = 0.0
     order_dict["timestamp"] = time.time()
-    order_dict["customerId"] = "cust_1" # hardcoded customer reference for simulation
+    order_dict["customerId"] = payload.customerId if hasattr(payload, 'customerId') and payload.customerId else "guest"
     
     if config.USE_MOCK_DB:
         mdb.orders.insert(0, order_dict)
@@ -455,6 +463,48 @@ def get_customers():
         try:
             docs = db.collection("customers").stream()
             return [doc.to_dict() for doc in docs]
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/customers")
+def register_customer(user: RegisterUserModel):
+    """
+    Called by mobile app after successful sign-up to store the user
+    profile in the backend database, making them visible on the web dashboard.
+    """
+    customer_dict = {
+        "uid": user.uid,
+        "name": user.name,
+        "email": user.email,
+        "phone": user.phone or "",
+        "role": user.role or "customer",
+        "address": "",
+        "totalPurchases": 0.0,
+        "previousOrders": 0,
+        "createdAt": time.time(),
+    }
+
+    if config.USE_MOCK_DB:
+        # Prevent duplicate entries by uid or email
+        for existing in mdb.customers:
+            if existing.get("uid") == user.uid or existing.get("email") == user.email:
+                # Update phone/name if changed, then return
+                existing["name"] = user.name
+                existing["phone"] = user.phone or existing.get("phone", "")
+                return existing
+        mdb.customers.append(customer_dict)
+        mdb.add_activity_log(f"New customer registered: {user.name} ({user.email})")
+        return customer_dict
+    else:
+        try:
+            ref = db.collection("customers").document(user.uid)
+            doc = ref.get()
+            if doc.exists:
+                # Update name/phone and return
+                ref.update({"name": user.name, "phone": user.phone or ""})
+                return {**doc.to_dict(), "name": user.name, "phone": user.phone or ""}
+            ref.set(customer_dict)
+            return customer_dict
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
