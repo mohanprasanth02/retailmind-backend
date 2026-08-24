@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Mail, Phone, MapPin, Calendar, Search, UserCheck, Star, ShoppingBag } from "lucide-react";
+import { Users, Mail, Phone, MapPin, Calendar, Search, UserCheck, Star, ShoppingBag, RefreshCw } from "lucide-react";
 import { formatPrice } from "../utils/currency";
 import Skeleton from "../components/Skeleton";
 import { API_BASE_URL } from "../config";
@@ -27,7 +27,11 @@ const Customers = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const getStats = (customer) => {
     const custOrders = orders.filter(o =>
@@ -52,17 +56,29 @@ const Customers = () => {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="pb-4 border-b border-black/[0.06]"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-black/[0.06]"
       >
-        <span className="apple-section-label block mb-1 text-[#007AFF]">
-          Customer Relationships
-        </span>
-        <h1 className="apple-hero-title">
-          Know your buyers inside out.
-        </h1>
-        <p className="apple-hero-subtitle">
-          Comprehensive customer profiles, purchase history, channel contacts, and lifetime revenue analytics.
-        </p>
+        <div>
+          <span className="apple-section-label block mb-1 text-[#007AFF]">
+            Customer Relationships
+          </span>
+          <h1 className="apple-hero-title">
+            Know your buyers inside out.
+          </h1>
+          <p className="apple-hero-subtitle">
+            Comprehensive customer profiles, purchase history, channel contacts, and lifetime revenue analytics.
+          </p>
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={fetchData}
+          className="btn btn-ghost flex items-center gap-2 cursor-pointer shadow-xs self-start md:self-auto"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#007AFF" }} />
+          <span>Sync Customers</span>
+        </motion.button>
       </motion.div>
 
       {/* ── Summary Stats ─────────────────────────────────────────── */}

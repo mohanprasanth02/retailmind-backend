@@ -58,59 +58,87 @@ class FirebaseService {
     defaultValue: 'https://retailmind-backend.onrender.com',
   );
 
-  String _activeBackendUrl = productionUrl;
+  String _activeBackendUrl = 'http://192.168.21.236:8000';
   bool _hasDetectedBackend = false;
 
   // Determine backend URL dynamically
-  String get backendUrl {
-    if (!_hasDetectedBackend) {
-      if (productionUrl.startsWith('https://')) return productionUrl;
-      if (kIsWeb) return 'http://localhost:8000';
-      try {
-        if (Platform.isAndroid) return 'http://10.0.2.2:8000';
-      } catch (_) {}
-      return 'http://127.0.0.1:8000';
-    }
-    return _activeBackendUrl;
+  String get backendUrl => _activeBackendUrl;
+
+  Future<void> setCustomBackendUrl(String url) async {
+    _activeBackendUrl = url.trim().replaceAll(RegExp(r'/+$'), '');
+    _hasDetectedBackend = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('retailmind_custom_backend_url', _activeBackendUrl);
+    } catch (_) {}
   }
 
   Future<void> detectBackend() async {
+    String? customUrl;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      customUrl = prefs.getString('retailmind_custom_backend_url');
+    } catch (_) {}
+
     final candidates = [
-      if (productionUrl.isNotEmpty) productionUrl,
+      if (customUrl != null && customUrl.isNotEmpty) customUrl,
+      'http://192.168.21.236:8000',
       'http://127.0.0.1:8000',
       'http://10.0.2.2:8000',
       'http://10.128.110.10:8000',
+      if (productionUrl.isNotEmpty) productionUrl,
     ];
 
-    print('[Backend Detector] Probing backend server candidates...');
+    print('[Backend Detector] Probing backend candidates: $candidates');
     for (final url in candidates) {
       try {
-        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 3));
+        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 2));
         if (res.statusCode == 200) {
           _activeBackendUrl = url;
           _hasDetectedBackend = true;
-          print('[Backend Detector] Found active backend at: $url');
+          print('[Backend Detector] Successfully connected to active backend at: $url');
           return;
         }
       } catch (_) {}
     }
 
-    // fallback
-    if (productionUrl.startsWith('https://')) {
-      _activeBackendUrl = productionUrl;
+    // Default fallback
+    if (kIsWeb) {
+      _activeBackendUrl = 'http://localhost:8000';
     } else {
-      try {
-        if (Platform.isAndroid) {
-          _activeBackendUrl = 'http://10.0.2.2:8000';
-        } else {
-          _activeBackendUrl = 'http://127.0.0.1:8000';
-        }
-      } catch (_) {
-        _activeBackendUrl = 'http://127.0.0.1:8000';
-      }
+      _activeBackendUrl = 'http://192.168.21.236:8000';
     }
     _hasDetectedBackend = true;
-    print('[Backend Detector] Probing completed. Using backend URL: $_activeBackendUrl');
+    print('[Backend Detector] Probing completed. Defaulting to: $_activeBackendUrl');
+  }
+
+  Future<bool> _syncCustomerToBackend(Map<String, dynamic> customerData) async {
+    final urlsToTry = [
+      _activeBackendUrl,
+      'http://192.168.21.236:8000',
+      'http://127.0.0.1:8000',
+      'http://10.0.2.2:8000',
+      if (productionUrl.isNotEmpty) productionUrl,
+    ];
+
+    for (final url in urlsToTry) {
+      try {
+        final res = await http.post(
+          Uri.parse('$url/api/customers'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode(customerData),
+        ).timeout(const Duration(seconds: 4));
+
+        if (res.statusCode == 200) {
+          _activeBackendUrl = url;
+          print('[Auth Service] Customer synced successfully to: $url');
+          return true;
+        }
+      } catch (e) {
+        print('[Auth Service] Sync to $url failed: $e');
+      }
+    }
+    return false;
   }
 
   // --- AUTHENTICATION ---
@@ -196,23 +224,13 @@ class FirebaseService {
 
         // ── Register with backend so web dashboard shows this user ──
         final uid = credential.user?.uid ?? '';
-        try {
-          await http.post(
-            Uri.parse('$backendUrl/api/customers'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'uid': uid,
-              'name': name,
-              'email': email,
-              'phone': phone,
-              'role': 'customer',
-            }),
-          );
-          print('[Auth Service] Customer profile synced to backend dashboard.');
-        } catch (e) {
-          // Non-fatal: backend might be offline; Firestore still has the data
-          print('[Auth Service] Could not sync customer to backend: $e');
-        }
+        await _syncCustomerToBackend({
+          'uid': uid,
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'role': 'customer',
+        });
 
         return {
           'uid': uid,
@@ -235,22 +253,13 @@ class FirebaseService {
         };
 
         // ── Register with backend so web dashboard shows this user ──
-        try {
-          await http.post(
-            Uri.parse('$backendUrl/api/customers'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'uid': uid,
-              'name': name,
-              'email': email,
-              'phone': phone,
-              'role': 'customer',
-            }),
-          );
-          print('[Auth Service] Mock customer profile synced to backend dashboard.');
-        } catch (e) {
-          print('[Auth Service] Could not sync mock customer to backend: $e');
-        }
+        await _syncCustomerToBackend({
+          'uid': uid,
+          'name': name,
+          'email': email,
+          'phone': phone,
+          'role': 'customer',
+        });
 
         // Save credentials for future logins in this session
         await _saveCredential(email.toLowerCase(), {
