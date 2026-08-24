@@ -1,8 +1,12 @@
 export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem('retailmind_backend_url');
-    if (custom && custom.trim().length > 0 && !custom.endsWith('retailmind-backend.onrender.com')) {
-      return custom.trim().replace(/\/+$/, '');
+    // Ignore legacy or local URLs when hosted on Vercel / production domain
+    if (custom && custom.trim().length > 0) {
+      const clean = custom.trim().replace(/\/+$/, '');
+      if (clean.includes('retailmind-backend-698m.onrender.com')) {
+        return clean;
+      }
     }
   }
   return (import.meta.env.VITE_API_URL || 'https://retailmind-backend-698m.onrender.com').replace(/\/+$/, '');

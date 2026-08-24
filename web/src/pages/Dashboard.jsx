@@ -236,13 +236,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchData();
-    if (isFirebaseConfigured && db) {
-      const unsub = onSnapshot(collection(db, "orders"), fetchData);
-      return () => unsub();
-    } else {
-      const iv = setInterval(fetchData, 5000);
-      return () => clearInterval(iv);
-    }
+    const iv = setInterval(fetchData, 2000);
+    return () => clearInterval(iv);
   }, [activeTab]);
 
   const handleMarkAllRead = async () => {

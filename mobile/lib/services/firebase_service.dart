@@ -304,10 +304,10 @@ class FirebaseService {
   // List of candidate base URLs to probe and fall back to
   List<String> get _candidateUrls => [
     _activeBackendUrl,
+    if (productionUrl.isNotEmpty && productionUrl != _activeBackendUrl) productionUrl,
     'http://192.168.21.236:8000',
     'http://10.0.2.2:8000',
     'http://127.0.0.1:8000',
-    if (productionUrl.isNotEmpty && productionUrl != _activeBackendUrl) productionUrl,
   ];
 
   /// Resilient POST that tries active backend, then candidate fallbacks.

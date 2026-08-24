@@ -46,18 +46,9 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    if (isFirebaseConfigured && db) {
-      const q = query(collection(db, "orders"), orderBy("timestamp", "desc"));
-      const unsub = onSnapshot(q, (snap) => {
-        setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-        setLoading(false);
-      }, () => fetchOrders());
-      return () => unsub();
-    } else {
-      fetchOrders();
-      const iv = setInterval(fetchOrders, 3000);
-      return () => clearInterval(iv);
-    }
+    fetchOrders();
+    const iv = setInterval(fetchOrders, 2000);
+    return () => clearInterval(iv);
   }, []);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
