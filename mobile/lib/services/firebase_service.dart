@@ -92,11 +92,15 @@ class FirebaseService {
     try {
       final prefs = await SharedPreferences.getInstance();
       customUrl = prefs.getString('retailmind_custom_backend_url');
+      if (customUrl != null && customUrl.endsWith('retailmind-backend.onrender.com')) {
+        await prefs.remove('retailmind_custom_backend_url');
+        customUrl = null;
+      }
     } catch (_) {}
 
     final candidates = [
       if (customUrl != null && customUrl.isNotEmpty) customUrl,
-      if (productionUrl.isNotEmpty) productionUrl,
+      productionUrl,
       'http://192.168.21.236:8000',
       'http://10.0.2.2:8000',
       'http://127.0.0.1:8000',
@@ -105,23 +109,15 @@ class FirebaseService {
     print('[Backend Detector] Probing backend candidates: $candidates');
     for (final url in candidates) {
       try {
-        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 3));
+        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 4));
         if (res.statusCode == 200) {
           _activeBackendUrl = url;
           _hasDetectedBackend = true;
           print('[Backend Detector] Successfully connected to hosted backend at: $url');
           return;
         }
-      } catch (_) {
-        try {
-          final resRoot = await http.get(Uri.parse('$url/')).timeout(const Duration(seconds: 3));
-          if (resRoot.statusCode == 200) {
-            _activeBackendUrl = url;
-            _hasDetectedBackend = true;
-            print('[Backend Detector] Successfully connected to hosted backend root at: $url');
-            return;
-          }
-        } catch (_) {}
+      } catch (e) {
+        print('[Backend Detector] Probe failed for $url: $e');
       }
     }
 

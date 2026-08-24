@@ -1,7 +1,7 @@
 export const getApiBaseUrl = () => {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem('retailmind_backend_url');
-    if (custom && custom.trim().length > 0) {
+    if (custom && custom.trim().length > 0 && !custom.endsWith('retailmind-backend.onrender.com')) {
       return custom.trim().replace(/\/+$/, '');
     }
   }
