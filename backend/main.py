@@ -81,10 +81,11 @@ class ChatQuestionModel(BaseModel):
     question: str
 
 class RegisterUserModel(BaseModel):
-    uid: str
+    uid: Optional[str] = None
     name: str
     email: str
     phone: Optional[str] = ""
+    address: Optional[str] = ""
     role: Optional[str] = "customer"
 
 # 3. Seed Firestore Database if empty
@@ -489,42 +490,64 @@ def get_customers():
 @app.post("/api/customers")
 def register_customer(user: RegisterUserModel):
     """
-    Called by mobile app after successful sign-up to store the user
-    profile in the backend database, making them visible on the web dashboard.
+    Store or update a user profile in the database, making them visible on the web dashboard.
     """
+    cust_uid = user.uid or f"cust_{uuid.uuid4().hex[:8]}"
     customer_dict = {
-        "uid": user.uid,
+        "uid": cust_uid,
         "name": user.name,
         "email": user.email,
         "phone": user.phone or "",
         "role": user.role or "customer",
-        "address": "",
+        "address": user.address or "India",
         "totalPurchases": 0.0,
         "previousOrders": 0,
         "createdAt": time.time(),
     }
 
     if config.USE_MOCK_DB:
-        # Prevent duplicate entries by uid or email
+        # Prevent duplicate entries by email or uid
         for existing in mdb.customers:
-            if existing.get("uid") == user.uid or existing.get("email") == user.email:
+            if (user.uid and existing.get("uid") == user.uid) or (user.email and existing.get("email") == user.email):
                 existing["name"] = user.name
                 existing["phone"] = user.phone or existing.get("phone", "")
+                if user.address:
+                    existing["address"] = user.address
                 _save_customers_to_disk()
                 return existing
         mdb.customers.append(customer_dict)
         _save_customers_to_disk()
-        mdb.add_activity_log(f"New customer registered: {user.name} ({user.email})")
+        mdb.add_activity_log(f"New customer added: {user.name} ({user.email})")
         return customer_dict
     else:
         try:
-            ref = db.collection("customers").document(user.uid)
+            ref = db.collection("customers").document(cust_uid)
             doc = ref.get()
             if doc.exists:
-                ref.update({"name": user.name, "phone": user.phone or ""})
+                ref.update({"name": user.name, "phone": user.phone or "", "address": user.address or ""})
                 return {**doc.to_dict(), "name": user.name, "phone": user.phone or ""}
             ref.set(customer_dict)
             return customer_dict
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/customers/{customer_id}")
+def delete_customer(customer_id: str):
+    """
+    Delete a customer profile by ID (e.g. remove dummy/test customers).
+    """
+    if config.USE_MOCK_DB:
+        for idx, c in enumerate(mdb.customers):
+            if c.get("uid") == customer_id or c.get("customerId") == customer_id:
+                deleted = mdb.customers.pop(idx)
+                _save_customers_to_disk()
+                mdb.add_activity_log(f"Removed customer: {deleted.get('name')}")
+                return {"status": "success", "message": f"Customer {deleted.get('name')} removed"}
+        raise HTTPException(status_code=404, detail="Customer not found")
+    else:
+        try:
+            db.collection("customers").document(customer_id).delete()
+            return {"status": "success", "customerId": customer_id}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
