@@ -17,6 +17,9 @@ class FirebaseService {
   // Local active user storage for mock mode
   Map<String, dynamic>? _mockUser;
 
+  // Stores registered credentials in mock mode: email → {uid, name, password}
+  final Map<String, Map<String, String>> _mockCredentials = {};
+
   // Default production or local backend URL
   static const String productionUrl = String.fromEnvironment(
     'BACKEND_URL',
@@ -119,14 +122,20 @@ class FirebaseService {
       if (password.length < 6) {
         throw Exception('Password must be at least 6 characters.');
       }
-      if (password != 'password' && password != 'password123') {
-        throw Exception('Incorrect password. Please use standard password: password');
+
+      // Check against credentials stored during registration
+      final stored = _mockCredentials[email.toLowerCase()];
+      if (stored == null) {
+        throw Exception('No account found with this email. Please register first.');
+      }
+      if (stored['password'] != password) {
+        throw Exception('Incorrect password. Please try again.');
       }
 
       _mockUser = {
-        'uid': 'mock_uid_${email.split('@')[0]}',
+        'uid': stored['uid']!,
         'email': email,
-        'name': email.split('@')[0].toUpperCase(),
+        'name': stored['name']!,
       };
       return _mockUser;
     }
@@ -207,6 +216,13 @@ class FirebaseService {
         } catch (e) {
           print('[Auth Service] Could not sync mock customer to backend: $e');
         }
+
+        // Save credentials for future logins in this session
+        _mockCredentials[email.toLowerCase()] = {
+          'uid': uid,
+          'name': name,
+          'password': password,
+        };
 
         return _mockUser;
       } else {

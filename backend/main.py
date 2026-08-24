@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import csv
+import json
 from io import StringIO
 from fastapi import FastAPI, HTTPException, Response, Query
 from fastapi.responses import FileResponse, StreamingResponse
@@ -14,6 +15,9 @@ import mock_db as mdb
 from services.pdf_service import generate_invoice_pdf
 from services.ai_service import get_business_answer
 from services.firestore_listener import start_firestore_listener
+
+# Path to persist registered customers across restarts (mock mode)
+CUSTOMERS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "registered_customers.json")
 
 # 1. Initialize Firebase Admin SDK if not in mock mode
 db = None
@@ -87,6 +91,22 @@ class RegisterUserModel(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     print("[Startup] Running initialization tasks...")
+
+    # Load persisted customers from disk (mock mode) so registrations survive restarts
+    if config.USE_MOCK_DB:
+        try:
+            if os.path.exists(CUSTOMERS_FILE):
+                with open(CUSTOMERS_FILE, "r", encoding="utf-8") as f:
+                    saved = json.load(f)
+                existing_uids = {c["uid"] for c in mdb.customers}
+                for c in saved:
+                    if c.get("uid") not in existing_uids:
+                        mdb.customers.append(c)
+                        existing_uids.add(c["uid"])
+                print(f"[Startup] Loaded {len(saved)} registered customers from disk.")
+        except Exception as e:
+            print(f"[Startup] Could not load customers file: {e}")
+
     if not config.USE_MOCK_DB and db is not None:
         try:
             prod_ref = db.collection("products")
@@ -488,11 +508,12 @@ def register_customer(user: RegisterUserModel):
         # Prevent duplicate entries by uid or email
         for existing in mdb.customers:
             if existing.get("uid") == user.uid or existing.get("email") == user.email:
-                # Update phone/name if changed, then return
                 existing["name"] = user.name
                 existing["phone"] = user.phone or existing.get("phone", "")
+                _save_customers_to_disk()
                 return existing
         mdb.customers.append(customer_dict)
+        _save_customers_to_disk()
         mdb.add_activity_log(f"New customer registered: {user.name} ({user.email})")
         return customer_dict
     else:
@@ -500,13 +521,25 @@ def register_customer(user: RegisterUserModel):
             ref = db.collection("customers").document(user.uid)
             doc = ref.get()
             if doc.exists:
-                # Update name/phone and return
                 ref.update({"name": user.name, "phone": user.phone or ""})
                 return {**doc.to_dict(), "name": user.name, "phone": user.phone or ""}
             ref.set(customer_dict)
             return customer_dict
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+
+def _save_customers_to_disk():
+    """Persist the current customers list to a JSON file so registrations
+    survive backend restarts (mock mode only)."""
+    try:
+        os.makedirs(os.path.dirname(CUSTOMERS_FILE), exist_ok=True)
+        # Exclude the hardcoded seed customer from the saved file to avoid duplicates on reload
+        to_save = [c for c in mdb.customers if c.get("uid") != "cust_1"]
+        with open(CUSTOMERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(to_save, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[Persistence] Failed to save customers: {e}")
 
 # ----------------- AI ASSISTANT CHAT -----------------
 
