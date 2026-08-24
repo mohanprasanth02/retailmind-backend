@@ -52,11 +52,8 @@ class FirebaseService {
     }
   }
 
-  // Default production hosted backend URL
-  static const String productionUrl = String.fromEnvironment(
-    'BACKEND_URL',
-    defaultValue: 'https://retailmind-backend-698m.onrender.com',
-  );
+  // Hardcoded production hosted backend URL to prevent environment overrides
+  static const String productionUrl = 'https://retailmind-backend-698m.onrender.com';
 
   String _activeBackendUrl = 'https://retailmind-backend-698m.onrender.com';
   bool _hasDetectedBackend = false;
@@ -92,7 +89,7 @@ class FirebaseService {
     try {
       final prefs = await SharedPreferences.getInstance();
       customUrl = prefs.getString('retailmind_custom_backend_url');
-      if (customUrl != null && customUrl.endsWith('retailmind-backend.onrender.com')) {
+      if (customUrl != null && customUrl == 'https://retailmind-backend.onrender.com') {
         await prefs.remove('retailmind_custom_backend_url');
         customUrl = null;
       }
