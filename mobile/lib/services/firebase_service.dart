@@ -52,13 +52,13 @@ class FirebaseService {
     }
   }
 
-  // Default production or local backend URL
+  // Default production hosted backend URL
   static const String productionUrl = String.fromEnvironment(
     'BACKEND_URL',
     defaultValue: 'https://retailmind-backend.onrender.com',
   );
 
-  String _activeBackendUrl = 'http://192.168.21.236:8000';
+  String _activeBackendUrl = 'https://retailmind-backend.onrender.com';
   bool _hasDetectedBackend = false;
 
   // Determine backend URL dynamically
@@ -73,6 +73,20 @@ class FirebaseService {
     } catch (_) {}
   }
 
+  Future<bool> checkBackendConnection() async {
+    try {
+      final res = await http.get(Uri.parse('$_activeBackendUrl/api/status')).timeout(const Duration(seconds: 3));
+      return res.statusCode == 200;
+    } catch (_) {
+      try {
+        final resRoot = await http.get(Uri.parse('$_activeBackendUrl/')).timeout(const Duration(seconds: 3));
+        return resRoot.statusCode == 200;
+      } catch (_) {
+        return false;
+      }
+    }
+  }
+
   Future<void> detectBackend() async {
     String? customUrl;
     try {
@@ -82,34 +96,39 @@ class FirebaseService {
 
     final candidates = [
       if (customUrl != null && customUrl.isNotEmpty) customUrl,
-      'http://192.168.21.236:8000',
-      'http://127.0.0.1:8000',
-      'http://10.0.2.2:8000',
-      'http://10.128.110.10:8000',
       if (productionUrl.isNotEmpty) productionUrl,
+      'http://192.168.21.236:8000',
+      'http://10.0.2.2:8000',
+      'http://127.0.0.1:8000',
     ];
 
     print('[Backend Detector] Probing backend candidates: $candidates');
     for (final url in candidates) {
       try {
-        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 2));
+        final res = await http.get(Uri.parse('$url/api/status')).timeout(const Duration(seconds: 3));
         if (res.statusCode == 200) {
           _activeBackendUrl = url;
           _hasDetectedBackend = true;
-          print('[Backend Detector] Successfully connected to active backend at: $url');
+          print('[Backend Detector] Successfully connected to hosted backend at: $url');
           return;
         }
-      } catch (_) {}
+      } catch (_) {
+        try {
+          final resRoot = await http.get(Uri.parse('$url/')).timeout(const Duration(seconds: 3));
+          if (resRoot.statusCode == 200) {
+            _activeBackendUrl = url;
+            _hasDetectedBackend = true;
+            print('[Backend Detector] Successfully connected to hosted backend root at: $url');
+            return;
+          }
+        } catch (_) {}
+      }
     }
 
-    // Default fallback
-    if (kIsWeb) {
-      _activeBackendUrl = 'http://localhost:8000';
-    } else {
-      _activeBackendUrl = 'http://192.168.21.236:8000';
-    }
+    // Default to hosted backend
+    _activeBackendUrl = productionUrl;
     _hasDetectedBackend = true;
-    print('[Backend Detector] Probing completed. Defaulting to: $_activeBackendUrl');
+    print('[Backend Detector] Probing completed. Root set to hosted backend: $_activeBackendUrl');
   }
 
   Future<bool> _syncCustomerToBackend(Map<String, dynamic> customerData) async {

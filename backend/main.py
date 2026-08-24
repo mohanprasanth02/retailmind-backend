@@ -132,10 +132,15 @@ async def startup_event():
 
 # 4. API Routes
 
+@app.get("/")
+@app.get("/status")
+@app.get("/health")
 @app.get("/api/status")
 def get_status():
     return {
         "status": "online",
+        "app": "RetailMind AI Backend",
+        "version": "1.0.0",
         "mock_db": config.USE_MOCK_DB,
         "mock_ai": config.USE_MOCK_AI,
         "timestamp": time.time()
