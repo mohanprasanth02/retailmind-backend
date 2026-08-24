@@ -10,37 +10,37 @@ import {
 // ── All navigable commands ────────────────────────────────────────────────────
 const COMMANDS = [
   // Navigation
-  { id: "dashboard",    label: "Dashboard",        desc: "Live operations overview",    path: "/",             icon: LayoutDashboard, color: "#60a5fa",  group: "Pages" },
-  { id: "orders",       label: "Orders",            desc: "Incoming AI-parsed orders",   path: "/orders",       icon: ShoppingBag,     color: "#fbbf24",  group: "Pages" },
-  { id: "inventory",    label: "Inventory",         desc: "Stock & supplier data",       path: "/inventory",    icon: Warehouse,       color: "#a78bfa",  group: "Pages" },
-  { id: "products",     label: "Products",          desc: "Catalog & pricing",           path: "/products",     icon: Package,         color: "#34d399",  group: "Pages" },
-  { id: "customers",    label: "Customers",         desc: "Customer directory",          path: "/customers",    icon: Users,           color: "#22d3ee",  group: "Pages" },
-  { id: "invoices",     label: "Invoices",          desc: "PDF invoice management",      path: "/invoices",     icon: FileText,        color: "#fb7185",  group: "Pages" },
-  { id: "ai",           label: "AI Assistant",      desc: "Natural language queries",    path: "/ai-assistant", icon: Bot,             color: "#f59e0b",  group: "Pages" },
-  { id: "analytics",    label: "Analytics",         desc: "Revenue & performance",       path: "/analytics",    icon: TrendingUp,      color: "#34d399",  group: "Pages" },
-  { id: "channels",     label: "Sales Channels",    desc: "WhatsApp, Instagram, Email",  path: "/channels",     icon: Radio,           color: "#25D366",  group: "Pages" },
-  { id: "reports",      label: "Reports",           desc: "Export & audit reports",      path: "/reports",      icon: BarChart3,       color: "#818cf8",  group: "Pages" },
-  { id: "settings",     label: "Settings",          desc: "Store configuration",         path: "/settings",     icon: Settings,        color: "#94a3b8",  group: "Pages" },
+  { id: "dashboard", label: "Dashboard", desc: "Live operations overview", path: "/", icon: LayoutDashboard, color: "#60a5fa", group: "Pages" },
+  { id: "orders", label: "Orders", desc: "Incoming AI-parsed orders", path: "/orders", icon: ShoppingBag, color: "#fbbf24", group: "Pages" },
+  { id: "inventory", label: "Inventory", desc: "Stock & supplier data", path: "/inventory", icon: Warehouse, color: "#a78bfa", group: "Pages" },
+  { id: "products", label: "Products", desc: "Catalog & pricing", path: "/products", icon: Package, color: "#34d399", group: "Pages" },
+  { id: "customers", label: "Customers", desc: "Customer directory", path: "/customers", icon: Users, color: "#22d3ee", group: "Pages" },
+  { id: "invoices", label: "Invoices", desc: "PDF invoice management", path: "/invoices", icon: FileText, color: "#fb7185", group: "Pages" },
+  { id: "ai", label: "AI Assistant", desc: "Natural language queries", path: "/ai-assistant", icon: Bot, color: "#f59e0b", group: "Pages" },
+  { id: "analytics", label: "Analytics", desc: "Revenue & performance", path: "/analytics", icon: TrendingUp, color: "#34d399", group: "Pages" },
+  { id: "channels", label: "Sales Channels", desc: "WhatsApp, Instagram, Email", path: "/channels", icon: Radio, color: "#25D366", group: "Pages" },
+  { id: "reports", label: "Reports", desc: "Export & audit reports", path: "/reports", icon: BarChart3, color: "#818cf8", group: "Pages" },
+  { id: "settings", label: "Settings", desc: "Store configuration", path: "/settings", icon: Settings, color: "#94a3b8", group: "Pages" },
   // Actions
-  { id: "add-product",  label: "Add New Product",   desc: "Open product creation form",  path: "/products",     icon: Package,         color: "#34d399",  group: "Actions" },
-  { id: "view-orders",  label: "View Pending Orders",desc: "Filter orders to Pending",   path: "/orders",       icon: ShoppingBag,     color: "#fbbf24",  group: "Actions" },
-  { id: "export-csv",   label: "Export CSV Report", desc: "Download orders as CSV",      path: "/reports",      icon: BarChart3,       color: "#818cf8",  group: "Actions" },
+  { id: "add-product", label: "Add New Product", desc: "Open product creation form", path: "/products", icon: Package, color: "#34d399", group: "Actions" },
+  { id: "view-orders", label: "View Pending Orders", desc: "Filter orders to Pending", path: "/orders", icon: ShoppingBag, color: "#fbbf24", group: "Actions" },
+  { id: "export-csv", label: "Export CSV Report", desc: "Download orders as CSV", path: "/reports", icon: BarChart3, color: "#818cf8", group: "Actions" },
 ];
 
 // ── Command Palette Component ─────────────────────────────────────────────────
 const CommandPalette = ({ open, onClose }) => {
-  const [query, setQuery]       = useState("");
+  const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
-  const inputRef                = useRef(null);
-  const navigate                = useNavigate();
+  const inputRef = useRef(null);
+  const navigate = useNavigate();
 
   // Filter commands
   const filtered = query.trim()
     ? COMMANDS.filter(c =>
-        c.label.toLowerCase().includes(query.toLowerCase()) ||
-        c.desc.toLowerCase().includes(query.toLowerCase()) ||
-        c.group.toLowerCase().includes(query.toLowerCase())
-      )
+      c.label.toLowerCase().includes(query.toLowerCase()) ||
+      c.desc.toLowerCase().includes(query.toLowerCase()) ||
+      c.group.toLowerCase().includes(query.toLowerCase())
+    )
     : COMMANDS;
 
   // Group results
@@ -65,7 +65,7 @@ const CommandPalette = ({ open, onClose }) => {
     if (!open) return;
     if (e.key === "Escape") { onClose(); return; }
     if (e.key === "ArrowDown") { e.preventDefault(); setSelected(s => Math.min(s + 1, flat.length - 1)); }
-    if (e.key === "ArrowUp")   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
     if (e.key === "Enter" && flat[selected]) {
       navigate(flat[selected].path);
       onClose();

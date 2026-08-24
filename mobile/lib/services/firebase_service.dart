@@ -376,9 +376,9 @@ class FirebaseService {
     
     // Hardcoded offline catalog fallback
     return [
-      {"productId": "prod_1", "name": "Nike Air Max", "category": "Shoes", "price": 120.0, "stock": 45, "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"},
-      {"productId": "prod_2", "name": "Adidas Ultraboost", "category": "Shoes", "price": 180.0, "stock": 8, "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400"},
-      {"productId": "prod_3", "name": "Classic Black T-Shirt", "category": "Apparel", "price": 25.0, "stock": 120, "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400"},
+      {"productId": "prod_1", "name": "Nike Air Max", "category": "Shoes", "price": 9960.0, "stock": 45, "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"},
+      {"productId": "prod_2", "name": "Adidas Ultraboost", "category": "Shoes", "price": 14940.0, "stock": 8, "image": "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=400"},
+      {"productId": "prod_3", "name": "Classic Black T-Shirt", "category": "Apparel", "price": 2075.0, "stock": 120, "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=400"},
     ];
   }
 

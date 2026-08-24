@@ -1,0 +1,13 @@
+[
+  {
+    "uid": "test_user_1",
+    "name": "Mohan Prasanth",
+    "email": "mohan@example.com",
+    "phone": "+91 9876543210",
+    "role": "customer",
+    "address": "",
+    "totalPurchases": 0.0,
+    "previousOrders": 0,
+    "createdAt": 1787549303.3254404
+  }
+]

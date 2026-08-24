@@ -141,7 +141,7 @@ const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
 // ── Main App Inner ────────────────────────────────────────────────────────────
 function AppInner() {
   const [pendingCount, setPendingCount] = useState(0);
-  const [mobileOpen, setMobileOpen]     = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const { open: cmdOpen, setOpen: setCmdOpen, onClose: onCmdClose } = useCommandPalette();
 

@@ -58,11 +58,10 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
 
   return (
     <aside
-      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-50 select-none transition-transform duration-300 ease-out bg-white/95 backdrop-blur-2xl border-r border-black/[0.08] ${
-        mobileOpen
+      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-50 select-none transition-transform duration-300 ease-out bg-white/95 backdrop-blur-2xl border-r border-black/[0.08] ${mobileOpen
           ? "translate-x-0 shadow-2xl"
           : "-translate-x-full md:translate-x-0"
-      }`}
+        }`}
       style={{ width: "240px" }}
     >
       {/* ── Brand Header Bar ──────────── */}
@@ -125,17 +124,15 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      className={`relative flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all duration-150 rounded-xl ${
-                        isActive
+                      className={`relative flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all duration-150 rounded-xl ${isActive
                           ? "text-white bg-[#007AFF] shadow-md shadow-blue-500/20"
                           : "text-[#1D1D1F] hover:bg-black/[0.04]"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
-                            isActive ? "bg-white/20" : ""
-                          }`}
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isActive ? "bg-white/20" : ""
+                            }`}
                         >
                           <Icon
                             size={15}
@@ -148,11 +145,10 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
 
                       {badge > 0 ? (
                         <span
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition-transform ${
-                            isActive
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition-transform ${isActive
                               ? "bg-white text-[#007AFF]"
                               : "bg-[#FFF4E5] text-[#FF9500]"
-                          }`}
+                            }`}
                         >
                           {badge}
                         </span>
