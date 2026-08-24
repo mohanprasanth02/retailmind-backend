@@ -315,7 +315,7 @@ class FirebaseService {
   ];
 
   /// Resilient POST that tries active backend, then candidate fallbacks.
-  Future<http.Response?> _tryPost(String path, Map<String, dynamic> body, {Duration timeout = const Duration(seconds: 4)}) async {
+  Future<http.Response?> _tryPost(String path, Map<String, dynamic> body, {Duration timeout = const Duration(seconds: 12)}) async {
     for (final base in _candidateUrls) {
       try {
         final uri = Uri.parse('$base$path');
@@ -324,12 +324,14 @@ class FirebaseService {
           headers: {'Content-Type': 'application/json'},
           body: json.encode(body),
         ).timeout(timeout);
-        if (res.statusCode == 200 || res.statusCode == 201) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
           if (_activeBackendUrl != base) {
             _activeBackendUrl = base;
             print('[HTTP Service] Switched active backend to: $base');
           }
           return res;
+        } else {
+          print('[HTTP Service] POST $base$path returned status ${res.statusCode}: ${res.body}');
         }
       } catch (e) {
         print('[HTTP Service] POST $base$path failed: $e');
@@ -339,12 +341,12 @@ class FirebaseService {
   }
 
   /// Resilient GET that tries active backend, then candidate fallbacks.
-  Future<http.Response?> _tryGet(String path, {Duration timeout = const Duration(seconds: 4)}) async {
+  Future<http.Response?> _tryGet(String path, {Duration timeout = const Duration(seconds: 10)}) async {
     for (final base in _candidateUrls) {
       try {
         final uri = Uri.parse('$base$path');
         final res = await http.get(uri).timeout(timeout);
-        if (res.statusCode == 200) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
           if (_activeBackendUrl != base) {
             _activeBackendUrl = base;
             print('[HTTP Service] Switched active backend to: $base');

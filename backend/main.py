@@ -66,13 +66,13 @@ class OrderProductModel(BaseModel):
     price: Optional[float] = 0.0
 
 class OrderCreateModel(BaseModel):
-    customerName: str
-    phone: str
-    address: str
-    platform: str # whatsapp, instagram, website, email
+    customerName: Optional[str] = "Valued Customer"
+    phone: Optional[str] = ""
+    address: Optional[str] = ""
+    platform: Optional[str] = "website" # whatsapp, instagram, website, email
     message: Optional[str] = ""
     products: Optional[List[OrderProductModel]] = []
-    customerId: Optional[str] = ""  # real user UID from mobile registration
+    customerId: Optional[str] = "guest"
 
 class OrderStatusUpdateModel(BaseModel):
     status: str # Pending, Processing, Completed, Rejected
