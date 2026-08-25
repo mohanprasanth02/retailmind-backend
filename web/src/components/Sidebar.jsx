@@ -17,7 +17,10 @@ import {
   Radio,
   Cpu,
   X,
+  LogOut,
+  ShieldCheck,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 const navigationGroups = [
   {
@@ -55,6 +58,13 @@ const navigationGroups = [
 
 const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) => {
   const location = useLocation();
+  const { currentUser, logout } = useAuth();
+
+  const handleLogout = async () => {
+    if (window.confirm("Are you sure you want to sign out of the Admin Console?")) {
+      await logout();
+    }
+  };
 
   return (
     <aside
@@ -164,29 +174,43 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
         ))}
       </nav>
 
-      {/* ── Footer Status Widget ───────────────────────────── */}
-      <div className="p-3 border-t border-black/[0.06] bg-white/40">
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          className="flex items-center justify-between p-2.5 rounded-2xl bg-white/80 border border-black/[0.05] shadow-xs backdrop-blur-md"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded-md bg-[#EAF8ED] text-[#34C759] flex items-center justify-center">
-              <Cpu size={12} strokeWidth={2} />
+      {/* ── Footer Admin Profile & Status Widget ───────────────────────────── */}
+      <div className="p-3 border-t border-black/[0.06] bg-white/40 space-y-2">
+        {/* Admin User Card */}
+        <div className="flex items-center justify-between p-2 rounded-2xl bg-white/80 border border-black/[0.05] shadow-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
+              {(currentUser?.name || "M")[0].toUpperCase()}
             </div>
-            <div>
-              <span className="text-[11px] font-bold text-[#1D1D1F] block leading-none">
-                AI Store Engine
+            <div className="min-w-0">
+              <span className="text-xs font-bold text-[#1D1D1F] block leading-tight truncate">
+                {currentUser?.name || "Mohan"}
               </span>
-              <span className="text-[9px] font-medium text-[#86868B]">
-                High-Speed Sync
+              <span className="text-[10px] font-semibold text-[#007AFF] block leading-tight truncate">
+                {currentUser?.role || "Administrator"}
               </span>
             </div>
           </div>
-          <span className="text-[10px] text-[#007AFF] font-mono font-bold bg-[#E5F1FF] px-1.5 py-0.5 rounded-full">
+
+          <button
+            onClick={handleLogout}
+            title="Sign Out"
+            className="w-7 h-7 rounded-xl hover:bg-[#FFF2F2] text-[#86868B] hover:text-[#FF3B30] flex items-center justify-center border-none bg-transparent cursor-pointer transition-colors flex-shrink-0"
+          >
+            <LogOut size={14} />
+          </button>
+        </div>
+
+        {/* System info */}
+        <div className="flex items-center justify-between px-2 py-1">
+          <div className="flex items-center gap-1.5 text-[10px] text-[#86868B] font-medium">
+            <ShieldCheck size={12} className="text-[#34C759]" />
+            <span>Admin Active</span>
+          </div>
+          <span className="text-[9px] text-[#86868B] font-mono">
             v3.2
           </span>
-        </motion.div>
+        </div>
       </div>
     </aside>
   );

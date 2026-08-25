@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Settings as SettingsIcon, ShieldCheck, Database, Cpu, Save, Server, Zap, Globe, Check } from "lucide-react";
+import { Settings as SettingsIcon, ShieldCheck, Database, Cpu, Save, Server, Zap, Globe, Check, User, LogOut, Key } from "lucide-react";
 import { fireSuccessBurst } from "../components/MicroAnimations";
 import { API_BASE_URL, getApiBaseUrl, setApiBaseUrl } from "../config";
+import { useAuth } from "../context/AuthContext";
 
 const Settings = () => {
   const [sysStatus, setSysStatus] = useState({ mock_db: true, mock_ai: true, status: "offline" });
@@ -15,6 +16,7 @@ const Settings = () => {
     backendUrl: getApiBaseUrl(),
   });
   const [saved, setSaved] = useState(false);
+  const { currentUser, logout, isFirebaseConfigured } = useAuth();
 
   const checkStatus = async (url) => {
     try {
@@ -223,6 +225,62 @@ const Settings = () => {
             </motion.button>
           </div>
         </form>
+      </div>
+
+      {/* ── Administrator Account & Security Card ─────────────────── */}
+      <div className="glass-card p-6 bg-white rounded-2xl border border-black/[0.06] shadow-xs">
+        <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center">
+              <ShieldCheck size={18} strokeWidth={2.2} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-[#1D1D1F] m-0">Administrator Account & Auth Engine</h2>
+              <p className="text-[11px] text-[#86868B] m-0">Active admin session configuration</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#EAF8ED] text-[#28A745] text-[10px] font-bold border border-[#34C759]/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] animate-pulse" />
+            <span>{isFirebaseConfigured ? "Firebase Cloud Auth" : "Dynamic Local Admin Mode"}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="p-3.5 rounded-2xl bg-black/[0.02] border border-black/[0.05]">
+            <span className="text-[10px] uppercase tracking-wider text-[#86868B] font-bold block mb-1">Admin Username</span>
+            <span className="text-xs font-bold text-[#1D1D1F] font-mono">{currentUser?.username || "mohan"}</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-black/[0.02] border border-black/[0.05]">
+            <span className="text-[10px] uppercase tracking-wider text-[#86868B] font-bold block mb-1">Admin Email</span>
+            <span className="text-xs font-bold text-[#1D1D1F]">{currentUser?.email || "mohan@retailmind.ai"}</span>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-black/[0.02] border border-black/[0.05]">
+            <span className="text-[10px] uppercase tracking-wider text-[#86868B] font-bold block mb-1">Permission Role</span>
+            <span className="text-xs font-bold text-[#007AFF]">{currentUser?.role || "Administrator"} (Store Owner)</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-3 border-t border-black/[0.05]">
+          <div className="flex items-center gap-1.5 text-[11px] text-[#86868B]">
+            <Key size={13} />
+            <span>Admin-only access policy enabled. Public registration is locked.</span>
+          </div>
+
+          <button
+            onClick={() => {
+              if (window.confirm("Are you sure you want to sign out?")) {
+                logout();
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#FF3B30] hover:bg-[#FFF2F2] border border-[#FF3B30]/20 cursor-pointer transition-colors bg-transparent"
+          >
+            <LogOut size={13} />
+            <span>Sign Out Admin</span>
+          </button>
+        </div>
       </div>
     </div>
   );

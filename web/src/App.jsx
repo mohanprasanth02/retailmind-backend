@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, LogOut, User, ShieldCheck, ChevronDown } from "lucide-react";
 import { API_BASE_URL } from "./config";
 import { onSnapshot, collection, query, where } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "./firebase";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // ── Layout Components ─────────────────────────────────────────────────────────
 import Sidebar from "./components/Sidebar";
@@ -25,6 +27,7 @@ import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Analytics from "./pages/Analytics";
 import Channels from "./pages/Channels";
+import Login from "./pages/Login";
 
 // ── Page meta ─────────────────────────────────────────────────────────────────
 const PAGE_META = {
@@ -70,6 +73,87 @@ const PageWrapper = ({ children }) => (
     {children}
   </motion.div>
 );
+
+// ── Admin Profile Dropdown Menu ───────────────────────────────────────────────
+const AdminUserMenu = () => {
+  const { currentUser, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    setOpen(false);
+    await logout();
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full transition-all bg-white hover:bg-slate-50 border border-black/[0.08] shadow-xs cursor-pointer"
+      >
+        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+          {(currentUser?.name || "M")[0].toUpperCase()}
+        </div>
+        <div className="hidden sm:flex flex-col text-left">
+          <span className="text-[11px] font-extrabold text-[#1D1D1F] leading-tight">
+            {currentUser?.name || "Mohan"}
+          </span>
+          <span className="text-[9px] font-semibold text-[#007AFF] leading-tight">
+            {currentUser?.role || "Admin"}
+          </span>
+        </div>
+        <ChevronDown size={12} className="text-[#86868B]" />
+      </motion.button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 6, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            className="absolute right-0 mt-2 w-56 rounded-2xl bg-white/95 backdrop-blur-xl border border-black/[0.08] shadow-xl p-2 z-50 select-none"
+          >
+            {/* Header info */}
+            <div className="px-3 py-2.5 border-b border-black/[0.06] mb-1">
+              <p className="text-xs font-bold text-[#1D1D1F] m-0 truncate">
+                {currentUser?.name || "Mohan"}
+              </p>
+              <p className="text-[11px] text-[#86868B] m-0 truncate">
+                {currentUser?.email || "mohan@retailmind.ai"}
+              </p>
+              <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#E5F1FF] text-[#007AFF] text-[9px] font-bold">
+                <ShieldCheck size={10} />
+                <span>Store Administrator</span>
+              </div>
+            </div>
+
+            {/* Logout Action */}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-[#FF3B30] hover:bg-[#FFF2F2] rounded-xl transition-colors border-none cursor-pointer text-left"
+            >
+              <LogOut size={14} />
+              <span>Sign Out of Console</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 // ── Top Header ────────────────────────────────────────────────────────────────
 const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
@@ -133,13 +217,16 @@ const TopHeader = ({ pendingCount, onCmdOpen, onToggleMobile }) => {
           <span className="w-1.5 h-1.5 rounded-full bg-[#34C759] dot-pulse" />
           <span className="text-[11px] font-bold">Live Sync</span>
         </div>
+
+        {/* Admin Profile Dropdown */}
+        <AdminUserMenu />
       </div>
     </header>
   );
 };
 
-// ── Main App Inner ────────────────────────────────────────────────────────────
-function AppInner() {
+// ── Main Dashboard Layout ─────────────────────────────────────────────────────
+function DashboardLayout() {
   const [pendingCount, setPendingCount] = useState(0);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
@@ -215,13 +302,38 @@ function AppInner() {
   );
 }
 
+// ── Public Login Route Guard (redirects if already logged in) ─────────────────
+const LoginRoute = () => {
+  const { isAuthenticated, isAuthLoading } = useAuth();
+  if (!isAuthLoading && isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return <Login />;
+};
+
+// ── Root App Component ────────────────────────────────────────────────────────
 function App() {
   return (
-    <Router>
-      <NotificationProvider>
-        <AppInner />
-      </NotificationProvider>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <NotificationProvider>
+          <Routes>
+            {/* Public Login Route */}
+            <Route path="/login" element={<LoginRoute />} />
+
+            {/* Protected Store Dashboard Routes */}
+            <Route
+              path="/*"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </NotificationProvider>
+      </Router>
+    </AuthProvider>
   );
 }
 
