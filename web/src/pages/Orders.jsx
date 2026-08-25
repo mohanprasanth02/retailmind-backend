@@ -45,11 +45,52 @@ const Orders = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`);
       if (res.ok) {
-        const data = await res.json();
-        setOrders(data);
+        const serverData = await res.json();
+        
+        // Retrieve local cache
+        let localData = [];
         try {
-          localStorage.setItem("retailmind_orders_cache", JSON.stringify(data));
+          const cached = localStorage.getItem("retailmind_orders_cache");
+          if (cached) localData = JSON.parse(cached);
         } catch {}
+
+        // Map server orders
+        const orderMap = new Map();
+        
+        // 1. Load local cache first so historical orders are retained
+        localData.forEach(o => {
+          if (o && o.orderId) orderMap.set(o.orderId, o);
+        });
+
+        // 2. Overlay server data
+        serverData.forEach(o => {
+          if (o && o.orderId) orderMap.set(o.orderId, o);
+        });
+
+        const merged = Array.from(orderMap.values()).sort((a, b) => {
+          const tsA = typeof a.timestamp === "number" ? a.timestamp : (a.timestamp?._seconds || 0);
+          const tsB = typeof b.timestamp === "number" ? b.timestamp : (b.timestamp?._seconds || 0);
+          return tsB - tsA;
+        });
+
+        setOrders(merged);
+        try {
+          localStorage.setItem("retailmind_orders_cache", JSON.stringify(merged));
+        } catch {}
+
+        // If server restarted and lost orders that exist locally, re-sync them to server in background
+        const serverIds = new Set(serverData.map(o => o.orderId));
+        localData.forEach(async (localOrder) => {
+          if (localOrder.orderId && !serverIds.has(localOrder.orderId)) {
+            try {
+              await fetch(`${API_BASE_URL}/api/orders`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(localOrder),
+              });
+            } catch {}
+          }
+        });
       }
     } catch (e) {
       console.error(e);

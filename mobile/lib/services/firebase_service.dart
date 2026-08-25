@@ -382,12 +382,45 @@ class FirebaseService {
     ];
   }
 
-  // Local orders cache for seamless offline/mock fallback
+  // Local orders cache for seamless offline/mock fallback (persisted in SharedPreferences)
   final List<Map<String, dynamic>> _localMockOrders = [];
+  static const _kOrdersKey = 'retailmind_saved_orders';
+  bool _hasLoadedSavedOrders = false;
+
+  Future<void> _loadSavedOrders() async {
+    if (_hasLoadedSavedOrders) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kOrdersKey);
+      if (raw != null) {
+        final List decoded = json.decode(raw);
+        _localMockOrders.clear();
+        for (final item in decoded) {
+          if (item is Map) {
+            _localMockOrders.add(Map<String, dynamic>.from(item));
+          }
+        }
+        print('[DB Service] Loaded ${_localMockOrders.length} saved orders from local storage.');
+      }
+      _hasLoadedSavedOrders = true;
+    } catch (e) {
+      print('[DB Service] Error loading saved orders: $e');
+    }
+  }
+
+  Future<void> _persistSavedOrders() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kOrdersKey, json.encode(_localMockOrders));
+    } catch (e) {
+      print('[DB Service] Error saving orders to storage: $e');
+    }
+  }
 
   // --- ORDERS MANAGEMENT ---
 
   Future<bool> createOrder(Map<String, dynamic> orderData) async {
+    await _loadSavedOrders();
     final uid = currentUser?['uid'] ?? 'guest';
     final customerName = currentUser?['name'] ?? orderData['customerName'] ?? 'Valued Customer';
     
@@ -405,7 +438,10 @@ class FirebaseService {
     final res = await _tryPost('/api/orders', fullOrder);
     if (res != null && res.statusCode == 200) {
       final decoded = json.decode(res.body);
-      _localMockOrders.insert(0, Map<String, dynamic>.from(decoded));
+      final orderMap = Map<String, dynamic>.from(decoded);
+      _localMockOrders.removeWhere((o) => o['orderId'] == orderMap['orderId']);
+      _localMockOrders.insert(0, orderMap);
+      await _persistSavedOrders();
 
       if (isFirebaseInitialized) {
         try {
@@ -438,7 +474,9 @@ class FirebaseService {
           'timestamp': DateTime.now().millisecondsSinceEpoch / 1000,
         };
         await FirebaseFirestore.instance.collection('orders').doc(docId).set(orderMap);
+        _localMockOrders.removeWhere((o) => o['orderId'] == docId);
         _localMockOrders.insert(0, orderMap);
+        await _persistSavedOrders();
         return true;
       } catch (e) {
         print('[DB Service] Firebase direct order write fail: $e');
@@ -465,7 +503,9 @@ class FirebaseService {
       'total': 0.0,
       'timestamp': DateTime.now().millisecondsSinceEpoch / 1000,
     };
+    _localMockOrders.removeWhere((o) => o['orderId'] == localOrderId);
     _localMockOrders.insert(0, localOrder);
+    await _persistSavedOrders();
     return true;
   }
 
@@ -481,15 +521,44 @@ class FirebaseService {
       Timer? timer;
 
       void fetchFromApi() async {
+        await _loadSavedOrders();
         try {
           final res = await _tryGet('/api/orders');
           if (res != null && res.statusCode == 200 && !controller.isClosed) {
             final List decoded = json.decode(res.body);
             final fetched = decoded.map((o) => Map<String, dynamic>.from(o)).toList();
-            // Merge with any local orders not yet on server
+            
+            // Map for merging
+            final Map<String, Map<String, dynamic>> map = {};
+            for (final o in _localMockOrders) {
+              final id = o['orderId']?.toString();
+              if (id != null) map[id] = o;
+            }
+            for (final o in fetched) {
+              final id = o['orderId']?.toString();
+              if (id != null) map[id] = o;
+            }
+
+            final mergedList = map.values.toList();
+            mergedList.sort((a, b) {
+              final num tsA = (a['timestamp'] is num) ? a['timestamp'] : 0;
+              final num tsB = (b['timestamp'] is num) ? b['timestamp'] : 0;
+              return tsB.compareTo(tsA);
+            });
+
+            _localMockOrders.clear();
+            _localMockOrders.addAll(mergedList);
+            await _persistSavedOrders();
+
+            // Re-sync local orders to server if missing (e.g. server restarted)
             final serverIds = fetched.map((o) => o['orderId']).toSet();
-            final localOnly = _localMockOrders.where((o) => !serverIds.contains(o['orderId'])).toList();
-            controller.add([...localOnly, ...fetched]);
+            for (final localOrder in mergedList) {
+              if (!serverIds.contains(localOrder['orderId'])) {
+                _tryPost('/api/orders', localOrder);
+              }
+            }
+
+            controller.add(mergedList);
             return;
           }
         } catch (_) {}

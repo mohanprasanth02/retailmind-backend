@@ -66,6 +66,7 @@ class OrderProductModel(BaseModel):
     price: Optional[float] = 0.0
 
 class OrderCreateModel(BaseModel):
+    orderId: Optional[str] = None
     customerName: Optional[str] = "Valued Customer"
     phone: Optional[str] = ""
     address: Optional[str] = ""
@@ -73,6 +74,14 @@ class OrderCreateModel(BaseModel):
     message: Optional[str] = ""
     products: Optional[List[OrderProductModel]] = []
     customerId: Optional[str] = "guest"
+    status: Optional[str] = "Pending"
+    timestamp: Optional[float] = None
+    subtotal: Optional[float] = 0.0
+    gst: Optional[float] = 0.0
+    total: Optional[float] = 0.0
+    aiProcessed: Optional[bool] = False
+    aiSuggestedStatus: Optional[str] = ""
+    aiSuggestions: Optional[List[str]] = []
 
 class OrderStatusUpdateModel(BaseModel):
     status: str # Pending, Processing, Completed, Rejected
@@ -292,26 +301,32 @@ def get_orders(platform: Optional[str] = None):
 
 @app.post("/api/orders")
 def create_order(payload: OrderCreateModel):
-    order_id = f"order_{uuid.uuid4().hex[:8]}"
+    order_id = payload.orderId or f"order_{uuid.uuid4().hex[:8]}"
     order_dict = payload.dict()
     
     order_dict["orderId"] = order_id
-    order_dict["status"] = "Pending"
-    order_dict["aiProcessed"] = False
-    order_dict["aiSuggestedStatus"] = ""
-    order_dict["aiSuggestions"] = []
-    order_dict["subtotal"] = 0.0
-    order_dict["gst"] = 0.0
-    order_dict["total"] = 0.0
-    order_dict["timestamp"] = time.time()
+    order_dict["status"] = payload.status or "Pending"
+    order_dict["aiProcessed"] = payload.aiProcessed if payload.aiProcessed is not None else False
+    order_dict["aiSuggestedStatus"] = payload.aiSuggestedStatus or ""
+    order_dict["aiSuggestions"] = payload.aiSuggestions or []
+    order_dict["subtotal"] = payload.subtotal if payload.subtotal is not None else 0.0
+    order_dict["gst"] = payload.gst if payload.gst is not None else 0.0
+    order_dict["total"] = payload.total if payload.total is not None else 0.0
+    order_dict["timestamp"] = payload.timestamp or time.time()
     order_dict["customerId"] = payload.customerId if hasattr(payload, 'customerId') and payload.customerId else "guest"
     
     if config.USE_MOCK_DB:
+        # Check if already exists, update instead of duplicate
+        for idx, existing in enumerate(mdb.orders):
+            if existing.get("orderId") == order_id:
+                mdb.orders[idx] = order_dict
+                mdb.save_orders()
+                return order_dict
         mdb.orders.insert(0, order_dict)
         mdb.save_orders()
         mdb.add_notification(
             "New Order Incoming", 
-            f"New simulated order by {payload.customerName} via {payload.platform}.", 
+            f"New order by {payload.customerName} via {payload.platform}.", 
             "new_order"
         )
         return order_dict

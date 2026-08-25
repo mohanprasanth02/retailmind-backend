@@ -20,11 +20,33 @@ const Invoices = () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`);
       if (res.ok) {
-        const data = await res.json();
-        const validInvoices = data.filter(o => o.status === "Completed" || o.status === "Processing" || o.subtotal > 0);
-        setInvoices(validInvoices);
+        const serverData = await res.json();
+        
+        let localData = [];
         try {
-          localStorage.setItem("retailmind_invoices_cache", JSON.stringify(validInvoices));
+          const cached = localStorage.getItem("retailmind_invoices_cache");
+          if (cached) localData = JSON.parse(cached);
+        } catch {}
+
+        const map = new Map();
+        localData.forEach(inv => {
+          if (inv && inv.orderId) map.set(inv.orderId, inv);
+        });
+
+        const validServerInvoices = serverData.filter(o => o.status === "Completed" || o.status === "Processing" || o.subtotal > 0);
+        validServerInvoices.forEach(inv => {
+          if (inv && inv.orderId) map.set(inv.orderId, inv);
+        });
+
+        const merged = Array.from(map.values()).sort((a, b) => {
+          const tsA = typeof a.timestamp === "number" ? a.timestamp : (a.timestamp?._seconds || 0);
+          const tsB = typeof b.timestamp === "number" ? b.timestamp : (b.timestamp?._seconds || 0);
+          return tsB - tsA;
+        });
+
+        setInvoices(merged);
+        try {
+          localStorage.setItem("retailmind_invoices_cache", JSON.stringify(merged));
         } catch {}
       }
     } catch (e) {
