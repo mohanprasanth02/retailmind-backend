@@ -52,17 +52,11 @@ class _OrderFormScreenState extends State<OrderFormScreen> with SingleTickerProv
     final currentUser = fbService.currentUser;
     if (currentUser != null) {
       _nameController.text = currentUser['name'] ?? '';
-      _emailFallbackFill(currentUser['email']);
+      _phoneController.text = currentUser['phone'] ?? '';
+      _addressController.text = currentUser['address'] ?? '';
     }
     
     _loadCatalog();
-  }
-
-  void _emailFallbackFill(String? email) {
-    if (email != null && email.contains('john')) {
-      _phoneController.text = '+1 (555) 123-4567';
-      _addressController.text = '123 Main St, New York, NY';
-    }
   }
 
   @override

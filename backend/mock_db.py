@@ -59,12 +59,9 @@ for p in products:
 
 users = [
     {"uid": "admin_1", "email": "admin@retailmind.ai", "name": "Admin Manager", "role": "admin", "createdAt": time.time()},
-    {"uid": "cust_1", "email": "john@example.com", "name": "John Doe", "role": "customer", "createdAt": time.time()}
 ]
 
-customers = [
-    {"uid": "cust_1", "name": "John Doe", "phone": "+1 (555) 123-4567", "email": "john@example.com", "address": "123 Main St, New York, NY", "totalPurchases": 240.00, "previousOrders": 2}
-]
+customers = []
 
 orders = []
 

@@ -562,8 +562,7 @@ def _save_customers_to_disk():
     survive backend restarts (mock mode only)."""
     try:
         os.makedirs(os.path.dirname(CUSTOMERS_FILE), exist_ok=True)
-        # Exclude the hardcoded seed customer from the saved file to avoid duplicates on reload
-        to_save = [c for c in mdb.customers if c.get("uid") != "cust_1"]
+        to_save = mdb.customers
         with open(CUSTOMERS_FILE, "w", encoding="utf-8") as f:
             json.dump(to_save, f, ensure_ascii=False, indent=2)
     except Exception as e:

@@ -23,9 +23,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Pre-populate data
     final fbService = FirebaseService();
     final user = fbService.currentUser;
-    if (user != null && user['email'] != null && user['email'].contains('john')) {
-      _phoneController.text = '+1 (555) 123-4567';
-      _addressController.text = '123 Main St, New York, NY';
+    if (user != null) {
+      _phoneController.text = user['phone'] ?? '';
+      _addressController.text = user['address'] ?? '';
     }
   }
 
@@ -71,8 +71,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final fbService = Provider.of<FirebaseService>(context, listen: false);
     final user = fbService.currentUser;
     
-    final name = user?['name'] ?? 'John Doe';
-    final email = user?['email'] ?? 'john@example.com';
+    final name = user?['name'] ?? 'Customer User';
+    final email = user?['email'] ?? 'customer@retailmind.ai';
 
     return Scaffold(
       appBar: AppBar(
