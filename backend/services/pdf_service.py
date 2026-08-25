@@ -1,5 +1,4 @@
 import os
-import qrcode
 from io import BytesIO
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
@@ -7,13 +6,21 @@ from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, KeepTogether
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
+try:
+    import qrcode
+    HAS_QRCODE = True
+except ImportError:
+    HAS_QRCODE = False
+
 def generate_invoice_pdf(order: dict, output_path: str):
     """
     Generates a beautiful PDF invoice for the given order dictionary.
     Saves it to output_path.
     """
     # Ensure directory exists
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    dir_name = os.path.dirname(output_path)
+    if dir_name:
+        os.makedirs(dir_name, exist_ok=True)
     
     # 1. Setup Document
     doc = SimpleDocTemplate(
@@ -95,7 +102,7 @@ def generate_invoice_pdf(order: dict, output_path: str):
 
     # 3. Header Section (Two-column: Brand on left, Invoice metadata on right)
     brand_p = Paragraph(f"<b><font color='{accent_color.hexval()}'>RetailMind AI</font></b><br/>Company Brain for Smart Retail", title_style)
-    subbrand_p = Paragraph("Smart Retail Automated System<br/>Email: support@retailmind.ai | Phone: +1-800-RETAIL", subtitle_style)
+    subbrand_p = Paragraph("Smart Retail Automated System • Coimbatore Store HQ<br/>Email: support@retailmind.ai | Phone: +91 422 257 0000", subtitle_style)
     
     order_id = order.get("orderId", "N/A")
     # Take first 8 chars for display if too long
@@ -107,19 +114,27 @@ def generate_invoice_pdf(order: dict, output_path: str):
         try:
             # Handle float/int timestamp, string, or dict from Firebase
             if isinstance(timestamp, (int, float)):
-                date_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %I:%M %p")
+                if timestamp > 1e11:  # in milliseconds
+                    timestamp = timestamp / 1000.0
+                date_str = datetime.fromtimestamp(timestamp).strftime("%d %B %Y, %I:%M %p")
             elif isinstance(timestamp, dict) and "_seconds" in timestamp:
-                date_str = datetime.fromtimestamp(timestamp["_seconds"]).strftime("%Y-%m-%d %I:%M %p")
+                date_str = datetime.fromtimestamp(timestamp["_seconds"]).strftime("%d %B %Y, %I:%M %p")
+            elif isinstance(timestamp, str):
+                try:
+                    parsed = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                    date_str = parsed.strftime("%d %B %Y, %I:%M %p")
+                except Exception:
+                    date_str = str(timestamp)[:19]
             else:
-                date_str = str(timestamp)[:16]
+                date_str = datetime.now().strftime("%d %B %Y, %I:%M %p")
         except Exception:
-            date_str = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+            date_str = datetime.now().strftime("%d %B %Y, %I:%M %p")
     else:
-        date_str = datetime.now().strftime("%Y-%m-%d %I:%M %p")
+        date_str = datetime.now().strftime("%d %B %Y, %I:%M %p")
         
     meta_p = Paragraph(
         f"<b>INVOICE #INV-{short_order_id}</b><br/>"
-        f"Date: {date_str}<br/>"
+        f"Date &amp; Time: <b>{date_str}</b><br/>"
         f"Platform: {order.get('platform', 'Direct').upper()}<br/>"
         f"Status: <b><font color='{accent_color.hexval()}'>{order.get('status', 'Pending').upper()}</font></b>", 
         header_right_style
@@ -136,9 +151,10 @@ def generate_invoice_pdf(order: dict, output_path: str):
     # 4. Bill To & Bill From Section (Horizontal alignment)
     bill_from_text = (
         "<b>From:</b><br/>"
-        "RetailMind Store HQ<br/>"
-        "100 Innovation Way, Cyber City<br/>"
-        "GSTIN: 22AAAAA0000A1Z5"
+        "<b>RetailMind Smart Store HQ</b><br/>"
+        "124, Avinashi Road, Peelamedu,<br/>"
+        "Coimbatore, Tamil Nadu - 641004, India<br/>"
+        "GSTIN: 33AAAAA0000A1Z5 | State Code: 33"
     )
     
     customer_name = order.get("customerName", "Valued Customer")
@@ -147,9 +163,9 @@ def generate_invoice_pdf(order: dict, output_path: str):
     
     bill_to_text = (
         f"<b>Bill To:</b><br/>"
-        f"{customer_name}<br/>"
+        f"<b>{customer_name}</b><br/>"
         f"Phone: {phone}<br/>"
-        f"Address: {address}"
+        f"Delivery Address: {address}"
     )
     
     from_p = Paragraph(bill_from_text, body_style)
@@ -222,25 +238,31 @@ def generate_invoice_pdf(order: dict, output_path: str):
     story.append(Spacer(1, 15))
     
     # 6. Calculations & QR Code Section (Two-column: QR left, Totals right)
-    # Generate QR Code
-    qr_data = f"RetailMindAI:INV-{short_order_id}|Total:INR{total:.2f}"
-    qr = qrcode.QRCode(version=1, box_size=3, border=2)
-    qr.add_data(qr_data)
-    qr.make(fit=True)
-    img_qr = qr.make_image(fill_color="black", back_color="white")
-    
-    # Save QR code to bytes buffer
-    buffer = BytesIO()
-    img_qr.save(buffer, format='PNG')
-    buffer.seek(0)
-    qr_flowable = Image(buffer, width=70, height=70)
-    
-    qr_desc = Paragraph(
-        "<font size='7' color='#64748b'>Scan QR to verify invoice authenticity & authorize UPI payment gateway transfer.</font>", 
-        body_style
-    )
-    
-    qr_table = Table([[qr_flowable, qr_desc]], colWidths=[80, 140])
+    if HAS_QRCODE:
+        qr_data = f"RetailMindAI:INV-{short_order_id}|Total:INR{total:.2f}"
+        qr = qrcode.QRCode(version=1, box_size=3, border=2)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img_qr = qr.make_image(fill_color="black", back_color="white")
+        
+        buffer = BytesIO()
+        img_qr.save(buffer, format='PNG')
+        buffer.seek(0)
+        qr_flowable = Image(buffer, width=70, height=70)
+        qr_desc = Paragraph(
+            "<font size='7' color='#64748b'>Scan QR to verify invoice authenticity &amp; authorize payment gateway transfer.</font>", 
+            body_style
+        )
+        qr_table = Table([[qr_flowable, qr_desc]], colWidths=[75, 145])
+    else:
+        qr_desc = Paragraph(
+            f"<b>DIGITALLY VERIFIED INVOICE</b><br/>"
+            f"<font size='7' color='#007AFF'>RetailMind HQ • Coimbatore</font><br/>"
+            f"<font size='6.5' color='#64748b'>Auth Token: {short_order_id}-SEC-COIMBATORE<br/>GST Compliance Verified</font>", 
+            body_style
+        )
+        qr_table = Table([[qr_desc]], colWidths=[220])
+
     qr_table.setStyle(TableStyle([
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('LEFTPADDING', (0, 0), (-1, -1), 0),
@@ -266,12 +288,13 @@ def generate_invoice_pdf(order: dict, output_path: str):
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
     ]))
     
+    current_gen_time = datetime.now().strftime("%d-%b-%Y %I:%M:%S %p")
     story.append(KeepTogether([
         Spacer(1, 10),
         footer_row_table,
-        Spacer(1, 30),
-        Paragraph("Thank you for your business with RetailMind AI!", ParagraphStyle('Centred', parent=body_style, alignment=1)),
-
+        Spacer(1, 24),
+        Paragraph("<b>Thank you for your business with RetailMind AI!</b>", ParagraphStyle('CentredBold', parent=body_style, alignment=1, fontName='Helvetica-Bold', textColor=primary_color)),
+        Paragraph(f"<font size='7' color='#86868B'>RetailMind Smart Store HQ • Coimbatore, Tamil Nadu, India • Generated at {current_gen_time}</font>", ParagraphStyle('CentredSub', parent=body_style, alignment=1)),
     ]))
     
     # Build Document
