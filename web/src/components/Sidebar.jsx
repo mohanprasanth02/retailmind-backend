@@ -68,14 +68,13 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
 
   return (
     <aside
-      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-50 select-none transition-transform duration-300 ease-out bg-white/95 backdrop-blur-2xl border-r border-black/[0.08] ${mobileOpen
-          ? "translate-x-0 shadow-2xl"
-          : "-translate-x-full md:translate-x-0"
-        }`}
+      className={`sidebar apple-vibrancy-sidebar flex flex-col h-screen fixed left-0 top-0 z-50 select-none transition-transform duration-300 ease-out bg-white/95 dark:bg-[#121217]/95 backdrop-blur-2xl border-r border-black/[0.08] dark:border-white/[0.08] ${
+        mobileOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+      }`}
       style={{ width: "240px" }}
     >
       {/* ── Brand Header Bar ──────────── */}
-      <div className="px-5 pt-5 pb-3 border-b border-black/[0.06] flex items-center justify-between">
+      <div className="px-5 pt-5 pb-3 border-b border-black/[0.06] dark:border-white/[0.08] flex items-center justify-between">
         <Link to="/" onClick={onCloseMobile} className="flex items-center gap-3 no-underline group">
           <motion.div
             whileHover={{ scale: 1.05 }}
@@ -85,9 +84,9 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
             <Zap size={18} strokeWidth={2} />
           </motion.div>
           <div>
-            <h1 className="text-sm font-extrabold tracking-tight text-[#1D1D1F] flex items-center gap-1.5 m-0">
+            <h1 className="text-sm font-extrabold tracking-tight text-[#1D1D1F] dark:text-[#F5F5F7] flex items-center gap-1.5 m-0">
               RetailMind
-              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-full bg-[#E5F1FF] text-[#007AFF]">
+              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-full bg-[#E5F1FF] dark:bg-[#007AFF]/20 text-[#007AFF]">
                 OS
               </span>
             </h1>
@@ -100,7 +99,7 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
         {/* Mobile close button */}
         <button
           onClick={onCloseMobile}
-          className="md:hidden w-7 h-7 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F]"
+          className="md:hidden w-7 h-7 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 flex items-center justify-center border-none cursor-pointer text-[#1D1D1F] dark:text-[#F5F5F7]"
           aria-label="Close menu"
         >
           <X size={14} />
@@ -112,8 +111,7 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
         {navigationGroups.map((group) => (
           <div key={group.title}>
             <p
-              className="px-3 mb-1.5 text-[9.5px] font-extrabold tracking-[0.06em] uppercase"
-              style={{ color: "rgba(60, 60, 67, 0.55)" }}
+              className="px-3 mb-1.5 text-[9.5px] font-extrabold tracking-[0.06em] uppercase text-[#86868B]"
             >
               {group.title}
             </p>
@@ -134,15 +132,17 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                      className={`relative flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all duration-150 rounded-xl ${isActive
+                      className={`relative flex items-center justify-between px-3 py-2 text-xs font-semibold transition-all duration-150 rounded-xl ${
+                        isActive
                           ? "text-white bg-[#007AFF] shadow-md shadow-blue-500/20"
-                          : "text-[#1D1D1F] hover:bg-black/[0.04]"
-                        }`}
+                          : "text-[#1D1D1F] dark:text-[#D1D1D6] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                      }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <div
-                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isActive ? "bg-white/20" : ""
-                            }`}
+                          className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${
+                            isActive ? "bg-white/20" : ""
+                          }`}
                         >
                           <Icon
                             size={15}
@@ -155,10 +155,11 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
 
                       {badge > 0 ? (
                         <span
-                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition-transform ${isActive
+                          className={`px-2 py-0.5 text-[10px] font-bold rounded-full transition-transform ${
+                            isActive
                               ? "bg-white text-[#007AFF]"
-                              : "bg-[#FFF4E5] text-[#FF9500]"
-                            }`}
+                              : "bg-[#FFF4E5] dark:bg-[#FF9500]/20 text-[#FF9500]"
+                          }`}
                         >
                           {badge}
                         </span>
@@ -175,15 +176,15 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
       </nav>
 
       {/* ── Footer Admin Profile & Status Widget ───────────────────────────── */}
-      <div className="p-3 border-t border-black/[0.06] bg-white/40 space-y-2">
+      <div className="p-3 border-t border-black/[0.06] dark:border-white/[0.08] bg-white/40 dark:bg-[#121217]/40 space-y-2">
         {/* Admin User Card */}
-        <div className="flex items-center justify-between p-2 rounded-2xl bg-white/80 border border-black/[0.05] shadow-xs">
+        <div className="flex items-center justify-between p-2 rounded-2xl bg-white/80 dark:bg-white/[0.05] border border-black/[0.05] dark:border-white/[0.08] shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white flex items-center justify-center font-bold text-xs shadow-xs flex-shrink-0">
               {(currentUser?.name || "M")[0].toUpperCase()}
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-bold text-[#1D1D1F] block leading-tight truncate">
+              <span className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] block leading-tight truncate">
                 {currentUser?.name || "Mohan"}
               </span>
               <span className="text-[10px] font-semibold text-[#007AFF] block leading-tight truncate">
@@ -195,7 +196,7 @@ const Sidebar = ({ pendingOrdersCount = 0, mobileOpen = false, onCloseMobile }) 
           <button
             onClick={handleLogout}
             title="Sign Out"
-            className="w-7 h-7 rounded-xl hover:bg-[#FFF2F2] text-[#86868B] hover:text-[#FF3B30] flex items-center justify-center border-none bg-transparent cursor-pointer transition-colors flex-shrink-0"
+            className="w-7 h-7 rounded-xl hover:bg-[#FFF2F2] dark:hover:bg-[#FF3B30]/20 text-[#86868B] hover:text-[#FF3B30] flex items-center justify-center border-none bg-transparent cursor-pointer transition-colors flex-shrink-0"
           >
             <LogOut size={14} />
           </button>
