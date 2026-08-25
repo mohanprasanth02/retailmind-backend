@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { API_BASE_URL } from "../config";
 import { onSnapshot, collection } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "../firebase";
@@ -29,39 +29,11 @@ import {
   ArrowUpRight,
   Package,
   Zap,
-  SlidersHorizontal,
-  Eye,
-  EyeOff,
-  Check,
-  RotateCcw,
-  PlusCircle,
-  Sparkles,
 } from "lucide-react";
 import { formatPrice } from "../utils/currency";
-import { useTheme } from "../context/ThemeContext";
 
 // ── Chart Palette ────────────────────────────────────────────────────────────
 const PIE_COLORS = ["#007AFF", "#34C759", "#FF9500", "#5856D6"];
-
-const DEFAULT_WIDGETS = {
-  metricsCards: true,
-  revenueChart: true,
-  channelChart: true,
-  quickPos: true,
-  liveAlerts: true,
-  lowStockWarnings: true,
-  activityTrail: true,
-};
-
-const WIDGET_LABELS = [
-  { key: "metricsCards", label: "Executive KPI Metrics", desc: "Revenue, Orders, Products & Low Stock counters" },
-  { key: "revenueChart", label: "Revenue Trajectory Chart", desc: "Multi-channel sales performance trends" },
-  { key: "channelChart", label: "Channel Distribution", desc: "WhatsApp, Instagram, Web & Email share" },
-  { key: "quickPos", label: "Quick POS Action Bar", desc: "Instant billing and invoice generation launchpad" },
-  { key: "liveAlerts", label: "Live Operations Alerts", desc: "Real-time sync notifications" },
-  { key: "lowStockWarnings", label: "Low Stock Health Radar", desc: "Restock alerts & units left" },
-  { key: "activityTrail", label: "AI Activity Trail", desc: "Audit logs of system actions" },
-];
 
 // ── Count up hook ────────────────────────────────────────────────────────────
 function useCountUp(target, duration = 800) {
@@ -93,14 +65,14 @@ const StatCard = ({ label, value, icon: Icon, accent, prefix = "", suffix = "", 
       animate={{ opacity: 1, y: 0, scale: 1 }}
       whileHover={{ y: -2, scale: 1.01 }}
       transition={{ delay, duration: 0.35, type: "spring", stiffness: 350, damping: 25 }}
-      className="glass-card p-5 rounded-2xl bg-white dark:bg-[#181820] border border-black/[0.06] dark:border-white/[0.08] shadow-xs relative overflow-hidden select-none"
+      className="glass-card p-5 rounded-2xl bg-white border border-black/[0.06] shadow-xs relative overflow-hidden select-none"
     >
       <div className="flex items-start justify-between">
         <div>
-          <p className="apple-section-label mb-1.5 text-[#86868B]">
+          <p className="apple-section-label mb-1.5">
             {label}
           </p>
-          <h3 className="text-3xl font-extrabold tracking-tight text-[#1D1D1F] dark:text-[#F5F5F7]">
+          <h3 className="text-3xl font-extrabold tracking-tight text-[#1D1D1F]">
             {prefix}{typeof value === "number" ? animated.toLocaleString("en-IN") : value}{suffix}
           </h3>
         </div>
@@ -112,7 +84,7 @@ const StatCard = ({ label, value, icon: Icon, accent, prefix = "", suffix = "", 
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/[0.05] dark:border-white/[0.06]">
+      <div className="flex items-center justify-between mt-4 pt-3 border-t border-black/[0.05]">
         <div
           className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full"
           style={{ background: `${accent}15`, color: accent }}
@@ -130,7 +102,7 @@ const StatCard = ({ label, value, icon: Icon, accent, prefix = "", suffix = "", 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="px-3.5 py-2.5 rounded-2xl bg-white/95 dark:bg-[#1C1C24] border border-black/10 dark:border-white/15 shadow-xl backdrop-blur-xl text-xs">
+    <div className="px-3.5 py-2.5 rounded-2xl bg-white/95 border border-black/10 shadow-lg backdrop-blur-xl text-xs">
       <p className="font-semibold text-[#86868B] mb-0.5">{label}</p>
       {payload.map((p, i) => (
         <p key={i} className="font-bold text-sm text-[#007AFF] m-0">
@@ -168,7 +140,7 @@ const NotifItem = ({ n, i }) => (
       >
         {n.title}
       </p>
-      <p className="text-[12px] leading-snug font-medium text-[#1D1D1F] dark:text-[#F5F5F7] m-0">
+      <p className="text-[12px] leading-snug font-medium text-[#1D1D1F] m-0">
         {n.message}
       </p>
       {n.timestamp && (
@@ -184,19 +156,6 @@ const NotifItem = ({ n, i }) => (
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("7 Days");
-  const [studioOpen, setStudioOpen] = useState(false);
-  const { isDark } = useTheme();
-
-  // Widget settings
-  const [widgets, setWidgets] = useState(() => {
-    try {
-      const saved = localStorage.getItem("retailmind_dashboard_widgets");
-      return saved ? { ...DEFAULT_WIDGETS, ...JSON.parse(saved) } : DEFAULT_WIDGETS;
-    } catch {
-      return DEFAULT_WIDGETS;
-    }
-  });
-
   const [metrics, setMetrics] = useState({
     totalRevenue: 0,
     pendingOrders: 0,
@@ -209,17 +168,6 @@ const Dashboard = () => {
   const [recentNotifications, setRecentNotifications] = useState([]);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
-
-  const toggleWidget = (key) => {
-    const updated = { ...widgets, [key]: !widgets[key] };
-    setWidgets(updated);
-    localStorage.setItem("retailmind_dashboard_widgets", JSON.stringify(updated));
-  };
-
-  const resetWidgets = () => {
-    setWidgets(DEFAULT_WIDGETS);
-    localStorage.setItem("retailmind_dashboard_widgets", JSON.stringify(DEFAULT_WIDGETS));
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -313,107 +261,30 @@ const Dashboard = () => {
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-black/[0.06] dark:border-white/[0.08]"
+        className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-6 border-b border-black/[0.06]"
       >
         <div>
           <span className="apple-section-label block mb-2 text-[#007AFF]">
             Operational Command Center
           </span>
-          <h1 className="apple-hero-title text-[#1D1D1F] dark:text-[#F5F5F7]">
+          <h1 className="apple-hero-title">
             The intelligence behind every sale.
           </h1>
-          <p className="apple-hero-subtitle text-[#86868B]">
+          <p className="apple-hero-subtitle">
             Live multi-channel revenue analytics, AI-parsed customer orders, and real-time inventory synchronization.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto">
-          {/* Widget Studio Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setStudioOpen(!studioOpen)}
-            className="btn btn-ghost flex items-center gap-2 cursor-pointer shadow-xs dark:bg-white/[0.06] dark:border-white/10 dark:text-[#F5F5F7]"
-          >
-            <SlidersHorizontal size={14} className="text-[#007AFF]" />
-            <span>Customize Studio</span>
-          </motion.button>
-
-          {/* Sync Button */}
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={fetchData}
-            className="btn btn-ghost flex items-center gap-2 cursor-pointer shadow-xs dark:bg-white/[0.06] dark:border-white/10 dark:text-[#F5F5F7]"
-          >
-            <RefreshCw size={14} className={loading ? "animate-spin text-[#007AFF]" : "text-[#007AFF]"} />
-            <span>Sync</span>
-          </motion.button>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={fetchData}
+          className="btn btn-ghost flex items-center gap-2 cursor-pointer shadow-xs self-start md:self-auto"
+        >
+          <RefreshCw size={14} className={loading ? "animate-spin" : ""} style={{ color: "#007AFF" }} />
+          <span>Sync Operations</span>
+        </motion.button>
       </motion.div>
-
-      {/* ── Widget Studio Customization Drawer / Modal ───────────────────── */}
-      <AnimatePresence>
-        {studioOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="glass-card p-5 bg-white dark:bg-[#181820] rounded-3xl border border-[#007AFF]/20 shadow-xl overflow-hidden"
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-black/[0.06] dark:border-white/[0.08] mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-[#007AFF]/10 text-[#007AFF] flex items-center justify-center">
-                  <SlidersHorizontal size={16} />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] m-0">
-                    macOS Widget Studio
-                  </h3>
-                  <p className="text-[10px] text-[#86868B] m-0">Toggle & tailor your active operational widgets</p>
-                </div>
-              </div>
-
-              <button
-                onClick={resetWidgets}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-[#007AFF] bg-[#007AFF]/10 hover:bg-[#007AFF]/20 border-none cursor-pointer"
-              >
-                <RotateCcw size={12} />
-                <span>Reset Layout</span>
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {WIDGET_LABELS.map((w) => {
-                const isActive = widgets[w.key];
-                return (
-                  <button
-                    key={w.key}
-                    onClick={() => toggleWidget(w.key)}
-                    className={`flex items-start gap-3 p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                      isActive
-                        ? "bg-[#007AFF]/5 border-[#007AFF]/30 text-[#1D1D1F] dark:text-[#F5F5F7]"
-                        : "bg-black/[0.02] dark:bg-white/[0.03] border-black/[0.06] dark:border-white/[0.08] text-[#86868B] opacity-60"
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 text-xs font-bold ${
-                        isActive ? "bg-[#007AFF] text-white" : "bg-black/10 dark:bg-white/10 text-[#86868B]"
-                      }`}
-                    >
-                      {isActive ? <Check size={13} strokeWidth={3} /> : <EyeOff size={13} />}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold m-0 leading-tight truncate">{w.label}</p>
-                      <p className="text-[10px] text-[#86868B] m-0 leading-tight mt-0.5 truncate">{w.desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ── Loading Skeleton ─────────────────────────────────────────────── */}
       {loading && chartData.length === 0 ? (
@@ -425,314 +296,259 @@ const Dashboard = () => {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* ── Widget 1: Stat Cards Grid ─────────────────────────────────── */}
-          {widgets.metricsCards && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {statCards.map((s, i) => (
-                <StatCard key={s.label} {...s} delay={i * 0.05} />
-              ))}
-            </div>
-          )}
+          {/* ── Stat Cards Grid ─────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {statCards.map((s, i) => (
+              <StatCard key={s.label} {...s} delay={i * 0.05} />
+            ))}
+          </div>
 
-          {/* ── Widget 2 & 3: Charts Row ─────────────────────────────────── */}
-          {(widgets.revenueChart || widgets.channelChart) && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Revenue Area Chart */}
-              {widgets.revenueChart && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25, type: "spring", stiffness: 350, damping: 25 }}
-                  className={`glass-card p-6 bg-white dark:bg-[#181820] rounded-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs ${
-                    widgets.channelChart ? "lg:col-span-2" : "lg:col-span-3"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-black/[0.05] dark:border-white/[0.06]">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-[#E5F1FF] dark:bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center border border-[#007AFF]/20">
-                        <TrendingUp size={18} strokeWidth={2} />
-                      </div>
-                      <div>
-                        <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-[#F5F5F7] m-0 leading-tight">
-                          Revenue Dynamics
-                        </h2>
-                        <p className="text-xs text-[#86868B] m-0">
-                          Multi-channel performance trajectory
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Segmented Control */}
-                    <div className="apple-segmented-control bg-black/[0.04] dark:bg-white/[0.06]">
-                      {["7 Days", "30 Days", "1 Year"].map((tab) => (
-                        <button
-                          key={tab}
-                          onClick={() => setActiveTab(tab)}
-                          className={`apple-segmented-btn ${activeTab === tab ? "active" : ""}`}
-                        >
-                          {tab}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ height: 260 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                        <defs>
-                          <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#007AFF" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="#007AFF" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)"} vertical={false} />
-                        <XAxis
-                          dataKey="name"
-                          stroke="rgba(134,134,139,0.4)"
-                          tick={{ fill: "#86868B", fontSize: 11 }}
-                          axisLine={false} tickLine={false}
-                        />
-                        <YAxis
-                          stroke="rgba(134,134,139,0.4)"
-                          tick={{ fill: "#86868B", fontSize: 11 }}
-                          tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                          axisLine={false} tickLine={false} width={45}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                          type="monotone"
-                          dataKey="Revenue"
-                          stroke="#007AFF"
-                          strokeWidth={2.5}
-                          fill="url(#revGrad)"
-                          dot={false}
-                          activeDot={{ r: 5, fill: "#007AFF", strokeWidth: 2, stroke: isDark ? "#141419" : "#FFFFFF" }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Sales Channel Pie Chart */}
-              {widgets.channelChart && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.32, type: "spring", stiffness: 350, damping: 25 }}
-                  className={`glass-card p-6 bg-white dark:bg-[#181820] rounded-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs ${
-                    !widgets.revenueChart ? "lg:col-span-3" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3 mb-6 pb-4 border-b border-black/[0.05] dark:border-white/[0.06]">
-                    <div className="w-9 h-9 rounded-xl bg-[#F2F1FD] dark:bg-[#5856D6]/20 text-[#5856D6] flex items-center justify-center border border-[#5856D6]/20">
-                      <ShoppingBag size={18} strokeWidth={2} />
-                    </div>
-                    <div>
-                      <h2 className="text-base font-extrabold text-[#1D1D1F] dark:text-[#F5F5F7] m-0 leading-tight">
-                        Sales by Channel
-                      </h2>
-                      <p className="text-xs text-[#86868B] m-0">Order share breakdown</p>
-                    </div>
-                  </div>
-
-                  <div style={{ height: 260 }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={platformData}
-                          cx="50%" cy="42%"
-                          innerRadius={52} outerRadius={78}
-                          paddingAngle={4}
-                          dataKey="value"
-                          strokeWidth={0}
-                        >
-                          {platformData.map((_, i) => (
-                            <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid rgba(0,0,0,0.08)", background: isDark ? "#1C1C24" : "#FFFFFF", color: isDark ? "#F5F5F7" : "#1D1D1F" }} />
-                        <Legend
-                          verticalAlign="bottom" height={36}
-                          wrapperStyle={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#86868B" }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </motion.div>
-              )}
-            </div>
-          )}
-
-          {/* ── Widget 4: Quick POS Action Bar ───────────────────────────── */}
-          {widgets.quickPos && (
+          {/* ── Charts Row ──────────────────────────────────────────────── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Revenue Area Chart */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card p-5 bg-gradient-to-r from-[#007AFF]/10 via-[#5856D6]/10 to-[#34C759]/10 rounded-2xl border border-black/[0.06] dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4"
+              transition={{ delay: 0.25, type: "spring", stiffness: 350, damping: 25 }}
+              className="glass-card p-6 lg:col-span-2 bg-white rounded-2xl border border-black/[0.06] shadow-xs"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#007AFF] to-[#5856D6] text-white flex items-center justify-center shadow-md">
-                  <Zap size={20} />
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-black/[0.05]">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center border border-[#007AFF]/20">
+                    <TrendingUp size={18} strokeWidth={2} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-extrabold text-[#1D1D1F] m-0 leading-tight">
+                      Revenue Dynamics
+                    </h2>
+                    <p className="text-xs text-[#86868B] m-0">
+                      Multi-channel performance trajectory
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-[#1D1D1F] dark:text-[#F5F5F7] m-0">
-                    Rapid Store Checkout & POS
-                  </h3>
-                  <p className="text-xs text-[#86868B] m-0">Create express invoice, parse customer chat or dispatch delivery</p>
+
+                {/* Segmented Control */}
+                <div className="apple-segmented-control">
+                  {["7 Days", "30 Days", "1 Year"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`apple-segmented-btn ${activeTab === tab ? "active" : ""}`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <a
-                  href="/orders"
-                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#007AFF] text-white no-underline hover:bg-[#0066D6] shadow-sm transition-all flex items-center gap-1.5"
-                >
-                  <PlusCircle size={14} />
-                  <span>Process Order</span>
-                </a>
-                <a
-                  href="/invoices"
-                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-white/10 text-[#1D1D1F] dark:text-[#F5F5F7] no-underline hover:bg-black/5 border border-black/10 dark:border-white/10 transition-all"
-                >
-                  <span>New Invoice</span>
-                </a>
+              <div style={{ height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#007AFF" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="#007AFF" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      stroke="rgba(0,0,0,0.2)"
+                      tick={{ fill: "#86868B", fontSize: 11 }}
+                      axisLine={false} tickLine={false}
+                    />
+                    <YAxis
+                      stroke="rgba(0,0,0,0.1)"
+                      tick={{ fill: "#86868B", fontSize: 11 }}
+                      tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                      axisLine={false} tickLine={false} width={45}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                      type="monotone"
+                      dataKey="Revenue"
+                      stroke="#007AFF"
+                      strokeWidth={2.5}
+                      fill="url(#revGrad)"
+                      dot={false}
+                      activeDot={{ r: 5, fill: "#007AFF", strokeWidth: 2, stroke: "#FFFFFF" }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </motion.div>
-          )}
 
-          {/* ── Bottom Section: Alerts, Low Stock, Activity ──────────────── */}
+            {/* Sales Channel Pie Chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32, type: "spring", stiffness: 350, damping: 25 }}
+              className="glass-card p-6 bg-white rounded-2xl border border-black/[0.06] shadow-xs"
+            >
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-black/[0.05]">
+                <div className="w-9 h-9 rounded-xl bg-[#F2F1FD] text-[#5856D6] flex items-center justify-center border border-[#5856D6]/20">
+                  <ShoppingBag size={18} strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#1D1D1F] m-0 leading-tight">
+                    Sales by Channel
+                  </h2>
+                  <p className="text-xs text-[#86868B] m-0">Order share breakdown</p>
+                </div>
+              </div>
+
+              <div style={{ height: 260 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={platformData}
+                      cx="50%" cy="42%"
+                      innerRadius={52} outerRadius={78}
+                      paddingAngle={4}
+                      dataKey="value"
+                      strokeWidth={0}
+                    >
+                      {platformData.map((_, i) => (
+                        <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid rgba(0,0,0,0.08)" }} />
+                    <Legend
+                      verticalAlign="bottom" height={36}
+                      wrapperStyle={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.05em", color: "#86868B" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* ── Bottom Section ────────────────────────────────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Live Notifications */}
-            {widgets.liveAlerts && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.38, type: "spring", stiffness: 350, damping: 25 }}
-                className="glass-card p-5 bg-white dark:bg-[#181820] rounded-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs"
-              >
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-black/[0.05] dark:border-white/[0.06]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-[#E5F1FF] dark:bg-[#007AFF]/20 text-[#007AFF] flex items-center justify-center">
-                      <BellRing size={14} strokeWidth={2} />
-                    </div>
-                    <h2 className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] m-0">Live Alerts</h2>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38, type: "spring", stiffness: 350, damping: 25 }}
+              className="glass-card p-5 bg-white rounded-2xl border border-black/[0.06] shadow-xs"
+            >
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-black/[0.05]">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#E5F1FF] text-[#007AFF] flex items-center justify-center">
+                    <BellRing size={14} strokeWidth={2} />
                   </div>
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="text-[11px] font-semibold text-[#007AFF] hover:underline cursor-pointer bg-none border-none"
-                  >
-                    Clear all
-                  </button>
+                  <h2 className="text-xs font-bold text-[#1D1D1F] m-0">Live Alerts</h2>
                 </div>
+                <button
+                  onClick={handleMarkAllRead}
+                  className="text-[11px] font-semibold text-[#007AFF] hover:underline cursor-pointer bg-none border-none"
+                >
+                  Clear all
+                </button>
+              </div>
 
-                <div className="space-y-2 overflow-y-auto max-h-[230px]">
-                  {recentNotifications.length === 0 ? (
-                    <div className="text-center py-8 text-[#86868B]">
-                      <BellRing size={22} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-xs">No active notifications</p>
-                    </div>
-                  ) : (
-                    recentNotifications.map((n, i) => <NotifItem key={i} n={n} i={i} />)
-                  )}
-                </div>
-              </motion.div>
-            )}
+              <div className="space-y-2 overflow-y-auto max-h-[230px]">
+                {recentNotifications.length === 0 ? (
+                  <div className="text-center py-8 text-[#86868B]">
+                    <BellRing size={22} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">No active notifications</p>
+                  </div>
+                ) : (
+                  recentNotifications.map((n, i) => <NotifItem key={i} n={n} i={i} />)
+                )}
+              </div>
+            </motion.div>
 
             {/* Low Stock Items */}
-            {widgets.lowStockWarnings && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.44, type: "spring", stiffness: 350, damping: 25 }}
-                className="glass-card p-5 bg-white dark:bg-[#181820] rounded-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs"
-              >
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-black/[0.05] dark:border-white/[0.06]">
-                  <div className="w-7 h-7 rounded-lg bg-[#FFEBEA] dark:bg-[#FF3B30]/20 text-[#FF3B30] flex items-center justify-center">
-                    <AlertTriangle size={14} strokeWidth={2} />
-                  </div>
-                  <h2 className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] m-0">Low Stock Warnings</h2>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.44, type: "spring", stiffness: 350, damping: 25 }}
+              className="glass-card p-5 bg-white rounded-2xl border border-black/[0.06] shadow-xs"
+            >
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-black/[0.05]">
+                <div className="w-7 h-7 rounded-lg bg-[#FFEBEA] text-[#FF3B30] flex items-center justify-center">
+                  <AlertTriangle size={14} strokeWidth={2} />
                 </div>
+                <h2 className="text-xs font-bold text-[#1D1D1F] m-0">Low Stock Warnings</h2>
+              </div>
 
-                <div className="space-y-2 overflow-y-auto max-h-[230px]">
-                  {lowStockProducts.length === 0 ? (
-                    <div className="text-center py-8 text-[#86868B]">
-                      <Package size={22} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-xs">All inventory normal</p>
-                    </div>
-                  ) : (
-                    lowStockProducts.map((p, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 p-2.5 rounded-xl bg-[#FFEBEA]/40 dark:bg-[#FF3B30]/10 border border-[#FF3B30]/20"
-                      >
-                        {p.image && (
-                          <img
-                            src={p.image} alt={p.name}
-                            className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-black/10 dark:border-white/10"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold truncate text-[#1D1D1F] dark:text-[#F5F5F7] m-0">{p.name}</p>
-                          <p className="text-[10px] text-[#86868B] m-0">SKU: {p.sku}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-xs font-extrabold text-[#FF3B30] m-0">{p.stock}</p>
-                          <p className="text-[9px] text-[#86868B] m-0">units</p>
-                        </div>
+              <div className="space-y-2 overflow-y-auto max-h-[230px]">
+                {lowStockProducts.length === 0 ? (
+                  <div className="text-center py-8 text-[#86868B]">
+                    <Package size={22} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">All inventory normal</p>
+                  </div>
+                ) : (
+                  lowStockProducts.map((p, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 p-2.5 rounded-xl bg-[#FFEBEA]/40 border border-[#FF3B30]/20"
+                    >
+                      {p.image && (
+                        <img
+                          src={p.image} alt={p.name}
+                          className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-black/10"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold truncate text-[#1D1D1F] m-0">{p.name}</p>
+                        <p className="text-[10px] text-[#86868B] m-0">SKU: {p.sku}</p>
                       </div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            )}
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs font-extrabold text-[#FF3B30] m-0">{p.stock}</p>
+                        <p className="text-[9px] text-[#86868B] m-0">units</p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
 
             {/* Activity Logs */}
-            {widgets.activityTrail && (
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, type: "spring", stiffness: 350, damping: 25 }}
-                className="glass-card p-5 bg-white dark:bg-[#181820] rounded-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-xs"
-              >
-                <div className="flex items-center gap-2 mb-4 pb-3 border-b border-black/[0.05] dark:border-white/[0.06]">
-                  <div className="w-7 h-7 rounded-lg bg-[#F2F1FD] dark:bg-[#5856D6]/20 text-[#5856D6] flex items-center justify-center">
-                    <Activity size={14} strokeWidth={2} />
-                  </div>
-                  <h2 className="text-xs font-bold text-[#1D1D1F] dark:text-[#F5F5F7] m-0">Activity Trail</h2>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, type: "spring", stiffness: 350, damping: 25 }}
+              className="glass-card p-5 bg-white rounded-2xl border border-black/[0.06] shadow-xs"
+            >
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-black/[0.05]">
+                <div className="w-7 h-7 rounded-lg bg-[#F2F1FD] text-[#5856D6] flex items-center justify-center">
+                  <Activity size={14} strokeWidth={2} />
                 </div>
+                <h2 className="text-xs font-bold text-[#1D1D1F] m-0">Activity Trail</h2>
+              </div>
 
-                <div className="space-y-2 overflow-y-auto max-h-[230px]">
-                  {activityLogs.length === 0 ? (
-                    <div className="text-center py-8 text-[#86868B]">
-                      <Activity size={22} className="mx-auto mb-2 opacity-30" />
-                      <p className="text-xs">No recent logs</p>
-                    </div>
-                  ) : (
-                    activityLogs.map((log, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: 8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        className="flex gap-2.5 p-2.5 rounded-xl bg-black/[0.02] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06]"
-                      >
-                        <div className="w-1 rounded-full bg-[#5856D6] min-h-[16px]" />
-                        <div className="min-w-0">
-                          <p className="text-xs leading-snug font-medium text-[#1D1D1F] dark:text-[#F5F5F7] m-0">
-                            {log.message}
-                          </p>
-                          <p className="text-[10px] mt-0.5 text-[#86868B] m-0">
-                            {log.userId === "admin_1" ? "Admin" : "System"} ·{" "}
-                            {new Date(log.timestamp * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                </div>
-              </motion.div>
-            )}
+              <div className="space-y-2 overflow-y-auto max-h-[230px]">
+                {activityLogs.length === 0 ? (
+                  <div className="text-center py-8 text-[#86868B]">
+                    <Activity size={22} className="mx-auto mb-2 opacity-30" />
+                    <p className="text-xs">No recent logs</p>
+                  </div>
+                ) : (
+                  activityLogs.map((log, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="flex gap-2.5 p-2.5 rounded-xl bg-black/[0.02] border border-black/[0.04]"
+                    >
+                      <div className="w-1 rounded-full bg-[#5856D6] min-h-[16px]" />
+                      <div className="min-w-0">
+                        <p className="text-xs leading-snug font-medium text-[#1D1D1F] m-0">
+                          {log.message}
+                        </p>
+                        <p className="text-[10px] mt-0.5 text-[#86868B] m-0">
+                          {log.userId === "admin_1" ? "Admin" : "System"} ·{" "}
+                          {new Date(log.timestamp * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
           </div>
         </div>
       )}

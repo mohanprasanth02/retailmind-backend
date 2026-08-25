@@ -35,25 +35,6 @@
   --shadow-hover: 0 16px 36px -4px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.dark,
-[data-theme="dark"] {
-  --bg-base: #0B0B0E;
-  --bg-surface: #141419;
-  --bg-translucent: rgba(20, 20, 26, 0.85);
-
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-default: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.24);
-
-  --text-primary: #F5F5F7;
-  --text-secondary: #A1A1A6;
-  --text-caption: rgba(255, 255, 255, 0.45);
-  --text-muted: #86868B;
-
-  --shadow-card: 0 4px 24px -2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-hover: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
 /* ── Typography & Reset ─────────────────────────────────────────────────── */
 *,
 *::before,
@@ -143,14 +124,14 @@ svg {
 
 /* ── Translucent Bars ────────────────────────────────────────────────────── */
 .apple-vibrancy-header {
-  background: var(--bg-translucent) !important;
+  background: rgba(255, 255, 255, 0.82) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .apple-vibrancy-sidebar {
-  background: var(--bg-translucent) !important;
+  background: rgba(245, 245, 247, 0.85) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
   border-right: 1px solid var(--border-subtle);
@@ -164,55 +145,9 @@ svg {
   box-shadow: var(--shadow-card);
   position: relative;
   overflow: hidden;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s, background-color 0.25s;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s, border-color 0.25s;
   transform: translateZ(0);
   will-change: transform;
-}
-
-.dark .glass-card {
-  background: rgba(20, 20, 26, 0.88);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.dark .apple-hero-title {
-  color: #F5F5F7 !important;
-}
-
-.dark .apple-hero-subtitle {
-  color: #8E8E93 !important;
-}
-
-.dark .data-table thead tr {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.dark .data-table tbody tr {
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.dark .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.dark .data-table tbody td {
-  color: #F5F5F7;
-}
-
-.dark .input-field {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #F5F5F7;
-}
-
-.dark .btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: #F5F5F7;
-  border-color: rgba(255, 255, 255, 0.10);
-}
-
-.dark .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .glass-card:hover {
