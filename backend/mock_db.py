@@ -1,6 +1,15 @@
+import os
+import json
 import time
 import uuid
 from datetime import datetime
+
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+
+ORDERS_FILE = os.path.join(DATA_DIR, "orders.json")
+INVOICES_FILE = os.path.join(DATA_DIR, "invoices.json")
+CUSTOMERS_FILE = os.path.join(DATA_DIR, "registered_customers.json")
 
 # In-Memory Database for Mock Mode
 products = [
@@ -26,24 +35,10 @@ products = [
     {"productId": "prod_20", "name": "Summer Floral Dress", "category": "Apparel", "price": 3735.00, "stock": 40, "image": "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400", "sku": "AP-FD-20", "supplier": "Apparel Corp"},
     {"productId": "prod_21", "name": "Cargo Shorts", "category": "Apparel", "price": 2490.00, "stock": 50, "image": "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?w=400", "sku": "AP-CS-21", "supplier": "Denim Co"},
     {"productId": "prod_22", "name": "Athletic Sweatpants", "category": "Apparel", "price": 3320.00, "stock": 65, "image": "https://images.unsplash.com/photo-1551854838-212c50b4c184?w=400", "sku": "AP-SP-22", "supplier": "LuluFlex"},
-    {"productId": "prod_23", "name": "Wireless Ergonomic Mouse", "category": "Electronics", "price": 4149.00, "stock": 45, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400", "sku": "EL-WM-23", "supplier": "ElectroTech"},
-    {"productId": "prod_24", "name": "Bluetooth ANC Headphones", "category": "Electronics", "price": 16599.00, "stock": 20, "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400", "sku": "EL-HP-24", "supplier": "SonicBoom"},
-    {"productId": "prod_25", "name": "USB-C Multiport Adapter", "category": "Electronics", "price": 3319.00, "stock": 70, "image": "https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=400", "sku": "EL-UA-25", "supplier": "ElectroTech"},
-    {"productId": "prod_26", "name": "HD Webcam 1080p", "category": "Electronics", "price": 4979.00, "stock": 35, "image": "https://images.unsplash.com/photo-1600541519468-4a18d22f87a3?w=400", "sku": "EL-WC-26", "supplier": "PixelTech"},
-    {"productId": "prod_27", "name": "Smart LED Desk Lamp", "category": "Electronics", "price": 2489.00, "stock": 55, "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400", "sku": "EL-DL-27", "supplier": "ElectroTech"},
-    {"productId": "prod_28", "name": "Power Bank 20000mAh", "category": "Electronics", "price": 2904.00, "stock": 90, "image": "https://images.unsplash.com/photo-1609592424085-fe4d1e2e13fa?w=400", "sku": "EL-PB-28", "supplier": "SonicBoom"},
-    {"productId": "prod_29", "name": "Dual-Band Wi-Fi Router", "category": "Electronics", "price": 6639.00, "stock": 15, "image": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400", "sku": "EL-WR-29", "supplier": "ElectroTech"},
-    {"productId": "prod_30", "name": "RGB Mechanical Keyboard", "category": "Electronics", "price": 7469.00, "stock": 25, "image": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=400", "sku": "EL-MK-30", "supplier": "KeyForge"},
-    {"productId": "prod_31", "name": "Leather Passport Holder", "category": "Accessories", "price": 1660.00, "stock": 100, "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400", "sku": "AC-PH-31", "supplier": "Hide & Suede"},
-    {"productId": "prod_32", "name": "Polarized Aviator Sunglasses", "category": "Accessories", "price": 4150.00, "stock": 45, "image": "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400", "sku": "AC-AS-32", "supplier": "Apex Optics"},
-    {"productId": "prod_33", "name": "Canvas Travel Backpack", "category": "Accessories", "price": 5810.00, "stock": 30, "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400", "sku": "AC-TB-33", "supplier": "Sleek Designs"},
-    {"productId": "prod_34", "name": "Stainless Steel Key Organizer", "category": "Accessories", "price": 1245.00, "stock": 150, "image": "https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400", "sku": "AC-KO-34", "supplier": "EcoGoods"},
-    {"productId": "prod_35", "name": "Wool Knit Scarf", "category": "Accessories", "price": 2075.00, "stock": 80, "image": "https://images.unsplash.com/photo-1520903928273-0f44b0a2fe9a?w=400", "sku": "AC-KS-35", "supplier": "WarmWear"},
-    {"productId": "prod_36", "name": "Silicone Smart Watch Band", "category": "Accessories", "price": 1078.00, "stock": 200, "image": "https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=400", "sku": "AC-WB-36", "supplier": "EcoGoods"},
-    {"productId": "prod_37", "name": "Reusable Tote Bag", "category": "Accessories", "price": 706.00, "stock": 300, "image": "https://images.unsplash.com/photo-1544816155-12df9643f363?w=400", "sku": "AC-RT-37", "supplier": "EcoGoods"}
+    {"productId": "prod_23", "name": "Classic Aviator Sunglasses", "category": "Accessories", "price": 4150.00, "stock": 30, "image": "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400", "sku": "AC-AS-23", "supplier": "RayOptics"},
+    {"productId": "prod_24", "name": "Leather Bifold Wallet", "category": "Accessories", "price": 2490.00, "stock": 45, "image": "https://images.unsplash.com/photo-1627123424574-724758594e93?w=400", "sku": "AC-LW-24", "supplier": "LeatherCraft"}
 ]
 
-# We will initialize inventories to mirror products
 inventory = []
 for p in products:
     inventory.append({
@@ -61,20 +56,49 @@ users = [
     {"uid": "admin_1", "email": "admin@retailmind.ai", "name": "Admin Manager", "role": "admin", "createdAt": time.time()},
 ]
 
-customers = []
+# Helper to load JSON safely
+def _load_json_list(filepath):
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+    except Exception as e:
+        print(f"[mock_db] Failed to load {filepath}: {e}")
+    return []
 
-orders = []
+# Helper to save JSON safely
+def _save_json_list(filepath, data):
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[mock_db] Failed to save {filepath}: {e}")
+
+# Load persistent customers
+customers = _load_json_list(CUSTOMERS_FILE)
+
+# Load persistent orders (survives restarts)
+orders = _load_json_list(ORDERS_FILE)
+
+# Load persistent invoices (survives restarts)
+invoices = _load_json_list(INVOICES_FILE)
 
 notifications = []
 
-invoices = []
-
-# Track system logs
 activity_logs = [
     {"logId": "log_init", "message": "System database initialized.", "timestamp": time.time(), "userId": "system"}
 ]
 
-# Core helpers to manipulate local database
+def save_orders():
+    _save_json_list(ORDERS_FILE, orders)
+
+def save_invoices():
+    _save_json_list(INVOICES_FILE, invoices)
+
+def save_customers():
+    _save_json_list(CUSTOMERS_FILE, customers)
 
 def add_notification(title, message, notif_type, order_id=None):
     notif = {
@@ -88,8 +112,7 @@ def add_notification(title, message, notif_type, order_id=None):
     if order_id:
         notif["orderId"] = order_id
     notifications.insert(0, notif)
-    # cap at 30
-    if len(notifications) > 30:
+    if len(notifications) > 50:
         notifications.pop()
     return notif
 
@@ -101,4 +124,6 @@ def add_activity_log(message, user_id="admin_1"):
         "userId": user_id
     }
     activity_logs.insert(0, log)
+    if len(activity_logs) > 100:
+        activity_logs.pop()
     return log

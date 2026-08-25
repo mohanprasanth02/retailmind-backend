@@ -5,20 +5,34 @@ import { formatPrice } from "../utils/currency";
 import { API_BASE_URL } from "../config";
 
 const Invoices = () => {
-  const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [invoices, setInvoices] = useState(() => {
+    try {
+      const cached = localStorage.getItem("retailmind_invoices_cache");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading]   = useState(false);
   const [search, setSearch]     = useState("");
 
   const fetchInvoices = async () => {
-    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`);
       if (res.ok) {
         const data = await res.json();
-        setInvoices(data.filter(o => o.status === "Completed" || o.status === "Processing" || o.subtotal > 0));
+        const validInvoices = data.filter(o => o.status === "Completed" || o.status === "Processing" || o.subtotal > 0);
+        setInvoices(validInvoices);
+        try {
+          localStorage.setItem("retailmind_invoices_cache", JSON.stringify(validInvoices));
+        } catch {}
       }
     } catch (e) {
       console.error(e);
+      const cached = localStorage.getItem("retailmind_invoices_cache");
+      if (cached) {
+        try { setInvoices(JSON.parse(cached)); } catch {}
+      }
     } finally {
       setLoading(false);
     }

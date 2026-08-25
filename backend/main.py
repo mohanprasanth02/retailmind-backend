@@ -308,6 +308,7 @@ def create_order(payload: OrderCreateModel):
     
     if config.USE_MOCK_DB:
         mdb.orders.insert(0, order_dict)
+        mdb.save_orders()
         mdb.add_notification(
             "New Order Incoming", 
             f"New simulated order by {payload.customerName} via {payload.platform}.", 
@@ -353,6 +354,7 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateModel):
                         "pdfUrl": f"/api/orders/{order_id}/invoice",
                         "timestamp": time.time()
                     })
+                    mdb.save_invoices()
                     mdb.add_activity_log(f"Generated invoice {inv_id} for order {order_id}")
                     
                     # Automatically send invoice notification to customer
@@ -363,6 +365,7 @@ def update_order_status(order_id: str, payload: OrderStatusUpdateModel):
                         order_id=order_id
                     )
 
+                mdb.save_orders()
                 mdb.add_activity_log(f"Updated order status {order_id} to {new_status}")
                 return o
         raise HTTPException(status_code=404, detail="Order not found")

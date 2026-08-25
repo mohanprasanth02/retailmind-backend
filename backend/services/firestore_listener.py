@@ -181,6 +181,7 @@ def _mock_listener_loop():
                     if o["orderId"] == processed_order["orderId"]:
                         mdb.orders[i] = processed_order
                         break
+                mdb.save_orders()
                 
                 # Push notifications
                 mdb.add_notification(

@@ -29,17 +29,34 @@ const STATUS_CONFIG = {
 const TABS = ["all", "pending", "processing", "completed", "rejected"];
 
 const Orders = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState(() => {
+    try {
+      const cached = localStorage.getItem("retailmind_orders_cache");
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [successMsg, setSuccessMsg] = useState(null);
 
   const fetchOrders = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/orders`);
-      if (res.ok) setOrders(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setOrders(data);
+        try {
+          localStorage.setItem("retailmind_orders_cache", JSON.stringify(data));
+        } catch {}
+      }
     } catch (e) {
       console.error(e);
+      const cached = localStorage.getItem("retailmind_orders_cache");
+      if (cached) {
+        try { setOrders(JSON.parse(cached)); } catch {}
+      }
     } finally {
       setLoading(false);
     }
